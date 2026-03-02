@@ -240,11 +240,7 @@
 </div>
 
 <script>
-/** IMPORTANT:
- *  Do NOT add custom headers. That can trigger CORS preflight and fail.
- *  Keep POST as a simple request (body only).
- */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfFy15F0G7b0kLD32VlbBfeGLZ_gRCqf1xV5BXpnrMAg7Y0iX96x8U6tZc4U2-ewL9tg/exec"; // .../exec
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfFy15F0G7b0kLD32VlbBfeGLZ_gRCqf1xV5BXpnrMAg7Y0iX96x8U6tZc4U2-ewL9tg/exec";
 
 const STATUS = {
   NOT_STARTED: {label:"Not started", badge:"b0"},
@@ -255,30 +251,27 @@ const STATUS = {
 };
 
 let state = {
-  role: null,                 // "student" | "admin"
+  role: null,
   user: null,
   items: [],
   calendar: [],
-  settings: {
-    MIN_ROLE_POINTS: 8,
-    MAX_ROLE_POINTS: 12,
-    MAX_ROLES_PER_STUDENT: 4,
-    CLAIM_WINDOW_SECONDS: 60,
-    CLAIM_MAX_IN_WINDOW: 3
-  },
+  settings: { MIN_ROLE_POINTS:8, MAX_ROLE_POINTS:12, MAX_ROLES_PER_STUDENT:4, CLAIM_WINDOW_SECONDS:60, CLAIM_MAX_IN_WINDOW:3 },
   currentDayNo: 1,
   selectedDayNo: 1,
 
-  assignments: [],            // student roleIds
-  roleChecks: {},             // roleId -> bool
-  taskStatus: {},             // taskId -> {status,note,...}
+  assignments: [],             // roles for selected day
+  roleChecks: {},              // roleId -> {done,note}
+  taskStatus: {},
 
-  groups: [],                 // admin group list
+  summary: { earnedPoints:0, unfinishedCount:0 },
+
+  groups: [],
   adminGroupId: null,
-  adminCode: null,            // stored in memory (admin only)
+  adminCode: null,
 
-  adminMembers: [],           // from getGroup()
-  adminAssignmentsByStudent: {} // studentId -> [roleId...]
+  adminMembers: [],
+  adminDailyAssignmentsByStudent: {},
+  adminRoleChecksByStudent: {},
 };
 
 function qs(id){ return document.getElementById(id); }
@@ -295,39 +288,28 @@ async function apiPost(payload){
   return await res.json();
 }
 
-function setSubtitle(text){ qs("subtitle").textContent = text; }
-
 function stageName(stage){
   if (Number(stage) === 0) return "No project day";
   return "Stage " + stage;
 }
-
-function buildDaySelect(){
-  const sel = qs("daySelect");
-  sel.innerHTML = "";
-  state.calendar.forEach(d => {
-    const opt = document.createElement("option");
-    opt.value = d.DayNo;
-    opt.textContent = `${d.Label} — ${stageName(d.Stage)}`;
-    sel.appendChild(opt);
-  });
-  sel.value = String(state.selectedDayNo);
-  sel.onchange = () => {
-    state.selectedDayNo = Number(sel.value);
-    localStorage.setItem("tinyhome_dayNo", String(state.selectedDayNo));
-    renderTodayNote();
-    renderTasks();
-    renderRoles();
-  };
-}
-
-function renderTodayNote(){
-  const day = state.calendar.find(x => Number(x.DayNo) === Number(state.selectedDayNo));
-  qs("dayNote").textContent = day ? (day.Note || "") : "";
-}
+function setSubtitle(text){ qs("subtitle").textContent = text; }
 
 function isRole(item){ return String(item.Kind).toUpperCase() === "ROLE"; }
 function isTask(item){ return String(item.Kind).toUpperCase() === "TASK"; }
+
+function getDayObj(dayNo){
+  return state.calendar.find(x => Number(x.DayNo) === Number(dayNo)) || null;
+}
+function getStageForSelectedDay(){
+  const d = getDayObj(state.selectedDayNo);
+  return d ? Number(d.Stage || 0) : 1;
+}
+function interactiveStudentDay(){
+  return state.role === "student" && state.selectedDayNo === state.currentDayNo;
+}
+function previewStudentDay(){
+  return state.role === "student" && state.selectedDayNo === (state.currentDayNo + 1);
+}
 
 function filterRolesForStage(stage){
   return state.items.filter(it => isRole(it) && (String(it.Stage)==="ALL" || Number(it.Stage)===Number(stage)));
@@ -343,7 +325,7 @@ function rolePoints(roleId){
   const it = state.items.find(x => x.ItemID === roleId);
   return it ? Number(it.Points || 0) : 0;
 }
-function totalPoints(roleIds){
+function sumRolePoints(roleIds){
   return (roleIds || []).reduce((sum, rid) => sum + rolePoints(rid), 0);
 }
 
@@ -357,13 +339,11 @@ function makeHelp(tooltip){
   tip.textContent = tooltip || "No extra info";
   help.appendChild(tip);
 
-  // mobile toggle
   help.addEventListener("click", (e) => {
     const isOpen = help.getAttribute("data-open") === "1";
     help.setAttribute("data-open", isOpen ? "0" : "1");
     e.stopPropagation();
   });
-
   return help;
 }
 
@@ -375,38 +355,131 @@ function statusBadge(statusKey){
   return span;
 }
 
-function updatePointsPillStudent(){
+function buildDaySelect(){
+  const sel = qs("daySelect");
+  sel.innerHTML = "";
+
+  if (state.role === "student") {
+    const today = state.currentDayNo;
+    const tomorrow = today + 1;
+
+    const addOpt = (dayNo) => {
+      const d = getDayObj(dayNo);
+      if (!d) return;
+      const opt = document.createElement("option");
+      opt.value = d.DayNo;
+      opt.textContent = `${d.Label} — ${stageName(d.Stage)}`;
+      sel.appendChild(opt);
+    };
+
+    addOpt(today);
+    addOpt(tomorrow);
+    sel.value = String(state.selectedDayNo);
+  } else {
+    state.calendar.forEach(d => {
+      const opt = document.createElement("option");
+      opt.value = d.DayNo;
+      opt.textContent = `${d.Label} — ${stageName(d.Stage)}`;
+      sel.appendChild(opt);
+    });
+    sel.value = String(state.selectedDayNo);
+  }
+
+  sel.onchange = async () => {
+    state.selectedDayNo = Number(sel.value);
+    localStorage.setItem("tinyhome_dayNo", String(state.selectedDayNo));
+
+    renderTodayNote();
+
+    if (state.role === "student") {
+      await loadStudentDay(state.selectedDayNo);
+      renderRoles();
+      renderTasks();
+      return;
+    }
+
+    // admin: day changes -> reload group view
+    await loadAdminGroup();
+    renderTasks();
+    renderRoles();
+  };
+}
+
+function renderTodayNote(){
+  const day = getDayObj(state.selectedDayNo);
+  const note = qs("dayNote");
+  if (!day) { note.textContent = ""; return; }
+
+  if (previewStudentDay()) {
+    note.textContent = (day.Note || "") + " (Preview only. You cannot edit tomorrow.)";
+    return;
+  }
+  note.textContent = day.Note || "";
+}
+
+async function loadStudentDay(dayNo){
+  const res = await apiGet("getStudentDay", { studentId: state.user.studentId, dayNo: dayNo });
+  if (!res.ok) { alert(res.error || "Could not load day"); return; }
+  state.assignments = res.assignments || [];
+  state.roleChecks = res.roleChecks || {};
+  state.summary = res.summary || state.summary;
+}
+
+function updatePointsPill(){
   const pill = qs("pointsPill");
-  const pts = totalPoints(state.assignments || []);
-  const roleCount = (state.assignments || []).length;
+
+  if (state.role !== "student") {
+    pill.textContent = "Points: —";
+    pill.className = "pill";
+    return;
+  }
+
+  const todayPtsAssigned = sumRolePoints(state.assignments);
+  const earned = Number(state.summary.earnedPoints || 0);
+  const unfinished = Number(state.summary.unfinishedCount || 0);
+
   const minPts = Number(state.settings.MIN_ROLE_POINTS || 8);
   const maxPts = Number(state.settings.MAX_ROLE_POINTS || 12);
   const maxRoles = Number(state.settings.MAX_ROLES_PER_STUDENT || 4);
 
-  pill.textContent = `Points: ${pts} (target ${minPts}-${maxPts}) • Roles: ${roleCount}/${maxRoles}`;
+  const roleCount = state.assignments.length;
 
-  // uses your existing CSS classes: pill good/warn/bad
-  if (pts < minPts) pill.className = "pill warn";
-  else if (pts > maxPts) pill.className = "pill bad";
+  pill.textContent = `Today: ${todayPtsAssigned} pts • Roles: ${roleCount}/${maxRoles} • Earned: ${earned} • Unfinished: ${unfinished}`;
+
+  if (todayPtsAssigned < minPts) pill.className = "pill warn";
+  else if (todayPtsAssigned > maxPts) pill.className = "pill bad";
   else pill.className = "pill good";
 }
 
+/* -------- Student roles (daily + notes) -------- */
+let noteTimers = {}; // roleId -> timeout
+
+async function saveRoleCheck(roleId, done, note){
+  const payload = {
+    action:"setRoleCheck",
+    viewer:"student",
+    dayNo: state.selectedDayNo,
+    studentId: state.user.studentId,
+    roleId,
+    done: !!done,
+    note: note || "",
+  };
+  const res = await apiPost(payload);
+  if (!res.ok) alert(res.error || "Could not save");
+}
+
+function roleCheckObj(roleId){
+  return state.roleChecks[roleId] || { done:false, note:"" };
+}
+
 async function tryClaimRoleStudent(roleId){
-  const res = await apiPost({ action:"claimRole", studentId: state.user.studentId, roleId });
-  if (res.ok) {
-    state.assignments.push(roleId);
-    renderRoles();
-    return;
-  }
+  const res = await apiPost({ action:"claimRole", studentId: state.user.studentId, roleId, dayNo: state.selectedDayNo });
+  if (res.ok) { state.assignments.push(roleId); renderRoles(); return; }
 
-  // rapid-pick safeguard: ask teacher confirm
   if (res.code === "CONFIRM_REQUIRED") {
-    const ok = confirm(
-      `${res.error}\n\nIf your teacher said it is OK, press OK.\nIf not, press Cancel.`
-    );
+    const ok = confirm(`${res.error}\n\nIf your teacher said it is OK, press OK.\nIf not, press Cancel.`);
     if (!ok) return;
-
-    const res2 = await apiPost({ action:"claimRole", studentId: state.user.studentId, roleId, confirm:true });
+    const res2 = await apiPost({ action:"claimRole", studentId: state.user.studentId, roleId, dayNo: state.selectedDayNo, confirm:true });
     if (!res2.ok) { alert(res2.error || "Could not pick role"); return; }
     state.assignments.push(roleId);
     renderRoles();
@@ -416,29 +489,38 @@ async function tryClaimRoleStudent(roleId){
   alert(res.error || "Could not pick role");
 }
 
-function renderRoles(){
-  const day = state.calendar.find(x => Number(x.DayNo) === Number(state.selectedDayNo));
-  const stage = day ? Number(day.Stage) : 1;
+async function removeRoleStudent(roleId){
+  const res = await apiPost({ action:"unclaimRole", studentId: state.user.studentId, roleId, dayNo: state.selectedDayNo });
+  if (!res.ok) { alert(res.error || "Could not remove role"); return; }
+  state.assignments = state.assignments.filter(x => x !== roleId);
+  renderRoles();
+}
 
+function renderRoles(){
+  const day = getDayObj(state.selectedDayNo);
+  const stage = day ? Number(day.Stage) : 1;
   const list = qs("rolesList");
   list.innerHTML = "";
 
-  if (state.role === "student") updatePointsPillStudent();
-  else { qs("pointsPill").textContent = "Points: —"; qs("pointsPill").className = "pill"; }
+  updatePointsPill();
 
-  // Admin view
-  if (state.role !== "student") {
-    list.innerHTML = `<div class="note muted">Admin: use the role assignment panel below.</div>`;
+  // Admin: no left-side roles
+  if (state.role === "admin") {
+    list.innerHTML = `<div class="note muted">Admin: use the role assignment panel on the right.</div>`;
     qs("rolePicker").classList.add("hidden");
     return;
   }
 
+  const interactive = interactiveStudentDay();
   const assigned = state.assignments || [];
 
-  if (assigned.length === 0) {
-    list.innerHTML = `<div class="note">You have no roles yet. Pick roles to help your group.</div>`;
+  if (!interactive && previewStudentDay()) {
+    list.innerHTML = `<div class="note">Tomorrow preview. You cannot edit tomorrow.</div>`;
+  } else if (assigned.length === 0) {
+    list.innerHTML = `<div class="note">No roles picked for today yet.</div>`;
   }
 
+  // Assigned roles
   assigned.forEach(roleId => {
     const it = state.items.find(x => x.ItemID === roleId);
     if (!it) return;
@@ -449,14 +531,13 @@ function renderRoles(){
     const left = document.createElement("div");
     left.className = "left";
 
+    const check = roleCheckObj(roleId);
+
     const cb = document.createElement("input");
     cb.type = "checkbox";
-    cb.checked = !!state.roleChecks[roleId];
+    cb.checked = !!check.done;
+    cb.disabled = !interactive;
     cb.title = "Done today";
-    cb.addEventListener("change", async () => {
-      await apiPost({ action:"setRoleCheck", dayNo: state.selectedDayNo, studentId: state.user.studentId, roleId, done: cb.checked });
-      state.roleChecks[roleId] = cb.checked;
-    });
 
     const txt = document.createElement("div");
     txt.className = "txt";
@@ -467,11 +548,32 @@ function renderRoles(){
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    const stageTag = (String(it.Stage) === "ALL") ? "All stages" : ("Stage " + it.Stage);
-    meta.textContent = `${stageTag} • ${it.Points || 0} pts`;
+    meta.textContent = `${String(it.Stage)==="ALL" ? "All stages" : ("Stage " + it.Stage)} • ${it.Points || 0} pts`;
+
+    const noteBox = document.createElement("textarea");
+    noteBox.placeholder = "What did you do today? (short)";
+    noteBox.value = check.note || "";
+    noteBox.disabled = !interactive;
+
+    // save done + note
+    cb.addEventListener("change", async () => {
+      await saveRoleCheck(roleId, cb.checked, noteBox.value);
+      state.roleChecks[roleId] = { done: cb.checked, note: noteBox.value };
+    });
+
+    // debounce note saving
+    noteBox.addEventListener("input", () => {
+      if (!interactive) return;
+      clearTimeout(noteTimers[roleId]);
+      noteTimers[roleId] = setTimeout(async () => {
+        await saveRoleCheck(roleId, cb.checked, noteBox.value);
+        state.roleChecks[roleId] = { done: cb.checked, note: noteBox.value };
+      }, 600);
+    });
 
     txt.appendChild(title);
     txt.appendChild(meta);
+    txt.appendChild(noteBox);
 
     left.appendChild(cb);
     left.appendChild(txt);
@@ -479,18 +581,16 @@ function renderRoles(){
     const right = document.createElement("div");
     right.className = "row";
 
-    const btnRemove = document.createElement("button");
-    btnRemove.textContent = "Remove";
-    btnRemove.className = "ghost";
-    btnRemove.style.padding = "8px 10px";
-    btnRemove.addEventListener("click", async () => {
-      const res = await apiPost({ action:"unclaimRole", studentId: state.user.studentId, roleId });
-      if (!res.ok) { alert(res.error || "Could not remove role"); return; }
-      state.assignments = state.assignments.filter(x => x !== roleId);
-      renderRoles();
-    });
-
-    right.appendChild(btnRemove);
+    if (interactive) {
+      const btnRemove = document.createElement("button");
+      btnRemove.textContent = "Remove";
+      btnRemove.className = "ghost";
+      btnRemove.style.padding = "8px 10px";
+      btnRemove.addEventListener("click", async () => {
+        await removeRoleStudent(roleId);
+      });
+      right.appendChild(btnRemove);
+    }
 
     row.appendChild(left);
     row.appendChild(makeHelp(it.Tooltip));
@@ -499,10 +599,54 @@ function renderRoles(){
     list.appendChild(row);
   });
 
-  // Role picker (student)
+  // Role picker
   const picker = qs("rolePicker");
   const availableWrap = qs("availableRoles");
   availableWrap.innerHTML = "";
+
+  if (!interactive) {
+    // Preview tomorrow: show roles but disable Pick
+    picker.classList.remove("hidden");
+    const roles = filterRolesForStage(stage);
+    roles.forEach(it => {
+      const row = document.createElement("div");
+      row.className = "item";
+
+      const left = document.createElement("div");
+      left.className = "left";
+
+      const txt = document.createElement("div");
+      txt.className = "txt";
+
+      const title = document.createElement("div");
+      title.className = "title";
+      title.textContent = it.Title;
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = `${String(it.Stage)==="ALL" ? "All stages" : ("Stage "+it.Stage)} • ${it.Points||0} pts`;
+
+      txt.appendChild(title);
+      txt.appendChild(meta);
+      left.appendChild(txt);
+
+      const right = document.createElement("div");
+      right.className = "row";
+
+      const btn = document.createElement("button");
+      btn.textContent = "Pick (tomorrow)";
+      btn.className = "ghost";
+      btn.disabled = true;
+
+      right.appendChild(btn);
+
+      row.appendChild(left);
+      row.appendChild(makeHelp(it.Tooltip));
+      row.appendChild(right);
+      availableWrap.appendChild(row);
+    });
+    return;
+  }
 
   const maxRoles = Number(state.settings.MAX_ROLES_PER_STUDENT || 4);
   if (assigned.length >= maxRoles) {
@@ -531,7 +675,7 @@ function renderRoles(){
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = `${(String(it.Stage)==="ALL") ? "All stages" : ("Stage "+it.Stage)} • ${it.Points||0} pts`;
+    meta.textContent = `${String(it.Stage)==="ALL" ? "All stages" : ("Stage "+it.Stage)} • ${it.Points||0} pts`;
 
     txt.appendChild(title);
     txt.appendChild(meta);
@@ -559,6 +703,7 @@ function renderRoles(){
   });
 }
 
+/* -------- Tasks (day-gated for students) -------- */
 function allowedStatusOptions(){
   if (state.role === "admin") return ["NOT_STARTED","DOING","READY","OK","FIX"];
   return ["NOT_STARTED","DOING","READY"];
@@ -568,8 +713,8 @@ function renderTasks(){
   const list = qs("tasksList");
   list.innerHTML = "";
 
-  const day = state.calendar.find(x => Number(x.DayNo) === Number(state.selectedDayNo));
-  const stage = day ? Number(day.Stage) : 1;
+  const stage = getStageForSelectedDay();
+  const day = getDayObj(state.selectedDayNo);
 
   if (stage === 0) {
     list.innerHTML = `<div class="note">No tiny-home tasks today.</div>`;
@@ -579,6 +724,7 @@ function renderTasks(){
 
   const tasks = filterTasksForStage(stage);
   const opts = allowedStatusOptions();
+  const studentInteractive = interactiveStudentDay();
 
   let okCount = 0;
   tasks.forEach(t => {
@@ -621,11 +767,15 @@ function renderTasks(){
     });
     sel.value = current;
 
+    // disable student interactions on preview day
+    if (state.role === "student" && !studentInteractive) sel.disabled = true;
+
     sel.addEventListener("change", async () => {
       const newStatus = sel.value;
       const res = await apiPost({
         action:"setTaskStatus",
         viewer: state.role,
+        dayNo: state.selectedDayNo,
         groupId: state.role === "admin" ? state.adminGroupId : state.user.groupId,
         taskId: t.ItemID,
         status: newStatus,
@@ -649,6 +799,7 @@ function renderTasks(){
         const res = await apiPost({
           action:"setTaskStatus",
           viewer:"admin",
+          dayNo: state.selectedDayNo,
           groupId: state.adminGroupId,
           taskId: t.ItemID,
           status: state.taskStatus[t.ItemID]?.status || "NOT_STARTED",
@@ -674,23 +825,46 @@ function renderTasks(){
   qs("progressPill").textContent = `Progress: ${okCount}/${tasks.length} checked OK`;
 }
 
-// ---------------- ADMIN: Role assignment panel ----------------
+/* -------- Admin: move group chooser ABOVE tasks + show role done+notes -------- */
+function placeAdminPanelOnTop(){
+  const panel = qs("adminPanel");
+  const tasksTitle = qs("tasksTitle");
+  if (!panel || !tasksTitle) return;
+  const headerRow = tasksTitle.closest(".row.wrap");
+  if (!headerRow || !headerRow.parentNode) return;
+  // move panel above header row
+  if (panel.parentNode === headerRow.parentNode) {
+    headerRow.parentNode.insertBefore(panel, headerRow);
+  }
+}
+
+async function loadAdminGroup(){
+  if (!state.adminGroupId) return;
+  const res = await apiGet("getGroup", { groupId: state.adminGroupId, viewer:"admin", dayNo: state.selectedDayNo });
+  if (!res.ok) { alert(res.error || "Could not load group"); return; }
+
+  state.taskStatus = res.taskStatus || {};
+  state.adminMembers = res.members || [];
+  state.adminDailyAssignmentsByStudent = res.dailyAssignmentsByStudent || {};
+  state.adminRoleChecksByStudent = res.roleChecksByStudent || {};
+
+  renderAdminRoleAssign();
+  renderTasks();
+}
+
 function renderAdminRoleAssign(){
   const wrap = qs("adminRoleAssign");
-  if (!wrap) return; // if you haven't added the HTML block yet, do nothing
+  if (!wrap) return;
   wrap.innerHTML = "";
 
   const roles = filterAllRoles();
   const roleById = Object.fromEntries(roles.map(r => [r.ItemID, r]));
 
-  const minPts = Number(state.settings.MIN_ROLE_POINTS || 8);
-  const maxPts = Number(state.settings.MAX_ROLE_POINTS || 12);
-  const maxRoles = Number(state.settings.MAX_ROLES_PER_STUDENT || 4);
-
   state.adminMembers.forEach(m => {
     const sid = String(m.StudentID);
-    const currentRoles = state.adminAssignmentsByStudent[sid] || [];
-    const pts = totalPoints(currentRoles);
+    const assigned = state.adminDailyAssignmentsByStudent[sid] || [];
+    const checks = state.adminRoleChecksByStudent[sid] || {};
+    const pts = sumRolePoints(assigned);
 
     const card = document.createElement("div");
     card.className = "item";
@@ -710,7 +884,7 @@ function renderAdminRoleAssign(){
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = `Points: ${pts} (target ${minPts}-${maxPts}) • Roles: ${currentRoles.length}/${maxRoles}`;
+    meta.textContent = `Roles today: ${assigned.length} • Points today: ${pts}`;
 
     left.appendChild(name);
     left.appendChild(meta);
@@ -720,14 +894,13 @@ function renderAdminRoleAssign(){
 
     const sel = document.createElement("select");
     sel.style.minWidth = "260px";
-
     const o0 = document.createElement("option");
     o0.value = "";
-    o0.textContent = "Add a role…";
+    o0.textContent = "Assign a role…";
     sel.appendChild(o0);
 
     roles.forEach(r => {
-      if (currentRoles.includes(r.ItemID)) return;
+      if (assigned.includes(r.ItemID)) return;
       const o = document.createElement("option");
       o.value = r.ItemID;
       const st = String(r.Stage)==="ALL" ? "ALL" : ("S"+r.Stage);
@@ -743,7 +916,7 @@ function renderAdminRoleAssign(){
     btnAssign.addEventListener("click", async () => {
       const rid = sel.value;
       if (!rid) return;
-      const res = await apiPost({ action:"claimRole", studentId: sid, roleId: rid, override:true });
+      const res = await apiPost({ action:"claimRole", studentId: sid, roleId: rid, dayNo: state.selectedDayNo, override:true });
       if (!res.ok) { alert(res.error || "Could not assign"); return; }
       await loadAdminGroup();
     });
@@ -755,25 +928,30 @@ function renderAdminRoleAssign(){
     top.appendChild(right);
     card.appendChild(top);
 
-    // current roles list
     const roleList = document.createElement("div");
     roleList.className = "list";
     roleList.style.marginTop = "10px";
 
-    if (currentRoles.length === 0) {
+    if (assigned.length === 0) {
       const n = document.createElement("div");
       n.className = "note";
-      n.textContent = "No roles assigned.";
+      n.textContent = "No roles assigned for this day.";
       roleList.appendChild(n);
     } else {
-      currentRoles.forEach(rid => {
+      assigned.forEach(rid => {
         const r = roleById[rid];
+        const chk = checks[rid] || { done:false, note:"" };
 
         const row = document.createElement("div");
         row.className = "item";
 
         const l = document.createElement("div");
         l.className = "left";
+
+        const doneBox = document.createElement("input");
+        doneBox.type = "checkbox";
+        doneBox.checked = !!chk.done;
+        doneBox.disabled = true;
 
         const t = document.createElement("div");
         t.className = "txt";
@@ -784,10 +962,17 @@ function renderAdminRoleAssign(){
 
         const mm = document.createElement("div");
         mm.className = "meta";
-        mm.textContent = `${r && String(r.Stage)==="ALL" ? "All stages" : ("Stage " + (r ? r.Stage : "?"))} • ${(r ? r.Points : 0)} pts`;
+        mm.textContent = (chk.done ? "Done ✅" : "Not done") + (chk.note ? " • Note below" : "");
+
+        const note = document.createElement("div");
+        note.className = "note";
+        note.textContent = chk.note ? `Student note: ${chk.note}` : "Student note: (none)";
 
         t.appendChild(tt);
         t.appendChild(mm);
+        t.appendChild(note);
+
+        l.appendChild(doneBox);
         l.appendChild(t);
 
         const rr = document.createElement("div");
@@ -798,16 +983,16 @@ function renderAdminRoleAssign(){
         btnRemove.textContent = "Remove";
         btnRemove.style.padding = "8px 10px";
         btnRemove.addEventListener("click", async () => {
-          const res = await apiPost({ action:"unclaimRole", studentId: sid, roleId: rid });
+          const res = await apiPost({ action:"unclaimRole", studentId: sid, roleId: rid, dayNo: state.selectedDayNo, override:true });
           if (!res.ok) { alert(res.error || "Could not remove"); return; }
           await loadAdminGroup();
         });
 
         rr.appendChild(btnRemove);
+
         row.appendChild(l);
         row.appendChild(makeHelp(r ? r.Tooltip : ""));
         row.appendChild(rr);
-
         roleList.appendChild(row);
       });
     }
@@ -817,7 +1002,7 @@ function renderAdminRoleAssign(){
   });
 }
 
-// ---------------- ADMIN: Items manager (add/edit/deactivate) ----------------
+/* -------- Admin: Items manager (unchanged from your current setup) -------- */
 function filteredItems(){
   const kindSel = qs("filterKind");
   const stageSel = qs("filterStage");
@@ -834,7 +1019,7 @@ function filteredItems(){
 
 function renderItemsManager(){
   const wrap = qs("itemsManager");
-  if (!wrap) return; // if you haven't added the HTML block yet, do nothing
+  if (!wrap) return;
   wrap.innerHTML = "";
 
   const items = filteredItems();
@@ -870,11 +1055,6 @@ function renderItemsManager(){
     const right = document.createElement("div");
     right.className = "row wrap";
 
-    const btnEdit = document.createElement("button");
-    btnEdit.className = "ghost";
-    btnEdit.textContent = "Edit";
-    btnEdit.style.padding = "8px 10px";
-
     const btnDeactivate = document.createElement("button");
     btnDeactivate.className = "ghost";
     btnDeactivate.textContent = "Deactivate";
@@ -887,117 +1067,19 @@ function renderItemsManager(){
       await refreshItems();
     });
 
-    right.appendChild(btnEdit);
     right.appendChild(btnDeactivate);
-
     top.appendChild(left);
     top.appendChild(right);
 
-    const edit = document.createElement("div");
-    edit.className = "hidden";
-    edit.style.marginTop = "10px";
-
-    const form = document.createElement("div");
-    form.className = "card";
-    form.style.padding = "12px";
-    form.style.borderRadius = "14px";
-
-    form.innerHTML = `
-      <div class="row wrap" style="gap:10px">
-        <div style="flex:1;min-width:120px">
-          <label>Kind</label>
-          <select data-k="kind" style="width:100%;margin-top:6px">
-            <option value="TASK">TASK</option>
-            <option value="ROLE">ROLE</option>
-          </select>
-        </div>
-        <div style="flex:1;min-width:120px">
-          <label>Stage</label>
-          <select data-k="stage" style="width:100%;margin-top:6px">
-            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="ALL">ALL</option>
-          </select>
-        </div>
-        <div style="flex:2;min-width:220px">
-          <label>Title</label>
-          <input data-k="title" style="width:100%;margin-top:6px" />
-        </div>
-      </div>
-      <div class="row wrap" style="gap:10px;margin-top:10px">
-        <div style="flex:2;min-width:220px">
-          <label>Tooltip</label>
-          <input data-k="tooltip" style="width:100%;margin-top:6px" />
-        </div>
-        <div style="flex:1;min-width:120px">
-          <label>Points</label>
-          <input data-k="points" style="width:100%;margin-top:6px" />
-        </div>
-        <div style="flex:1;min-width:120px">
-          <label>Single owner?</label>
-          <select data-k="singleOwner" style="width:100%;margin-top:6px">
-            <option value="FALSE">No</option><option value="TRUE">Yes</option>
-          </select>
-        </div>
-        <div style="flex:1;min-width:120px">
-          <label>Order</label>
-          <input data-k="order" style="width:100%;margin-top:6px" />
-        </div>
-      </div>
-      <div class="row wrap" style="gap:10px;margin-top:10px;justify-content:flex-end">
-        <button data-k="save" class="primary">Save</button>
-        <button data-k="close" class="ghost">Close</button>
-      </div>
-      <div data-k="msg" class="note" style="margin-top:8px;color:var(--bad)"></div>
-    `;
-
-    const getEl = (k) => form.querySelector(`[data-k="${k}"]`);
-    getEl("kind").value = String(it.Kind).toUpperCase();
-    getEl("stage").value = String(it.Stage);
-    getEl("title").value = it.Title || "";
-    getEl("tooltip").value = it.Tooltip || "";
-    getEl("points").value = it.Points || "";
-    getEl("singleOwner").value = String(it.SingleOwner).toUpperCase()==="TRUE" ? "TRUE" : "FALSE";
-    getEl("order").value = it.Order || "";
-
-    getEl("close").addEventListener("click", () => edit.classList.add("hidden"));
-
-    getEl("save").addEventListener("click", async (ev) => {
-      ev.preventDefault();
-      getEl("msg").textContent = "";
-      const payload = {
-        action:"updateItem",
-        adminCode: state.adminCode,
-        itemId: it.ItemID,
-        kind: getEl("kind").value,
-        stage: getEl("stage").value,
-        title: getEl("title").value.trim(),
-        tooltip: getEl("tooltip").value.trim(),
-        points: getEl("points").value.trim(),
-        singleOwner: getEl("singleOwner").value,
-        order: Number(getEl("order").value || 999),
-      };
-      const res = await apiPost(payload);
-      if (!res.ok) { getEl("msg").textContent = res.error || "Could not save"; return; }
-      await refreshItems();
-    });
-
-    edit.appendChild(form);
-
-    btnEdit.addEventListener("click", () => edit.classList.toggle("hidden"));
-
     row.appendChild(top);
-    row.appendChild(edit);
-
     wrap.appendChild(row);
   });
 }
 
 async function refreshItems(){
   if (state.role !== "admin") return;
-
-  // easiest refresh: call login again with admin code (returns items)
   const res = await apiGet("login", { code: state.adminCode });
-  if (!res.ok) { alert(res.error || "Could not refresh items"); return; }
-
+  if (!res.ok) { alert(res.error || "Could not refresh"); return; }
   state.items = res.items || state.items;
   state.settings = res.settings || state.settings;
 
@@ -1017,17 +1099,15 @@ async function addItemFromForm(){
   const singleEl = qs("newSingle");
   const orderEl = qs("newOrder");
 
-  if (!kindEl || !stageEl || !titleEl || !tipEl || !ptsEl || !singleEl || !orderEl) return;
+  const title = (titleEl ? titleEl.value : "").trim();
+  if (!title) { if (msg) msg.textContent = "Title is required."; return; }
 
   const kind = kindEl.value;
   const stage = stageEl.value;
-  const title = titleEl.value.trim();
-  const tooltip = tipEl.value.trim();
-  const points = ptsEl.value.trim();
+  const tooltip = (tipEl ? tipEl.value : "").trim();
+  const points = (ptsEl ? ptsEl.value : "").trim();
   const singleOwner = singleEl.value;
-  const order = Number(orderEl.value || 999);
-
-  if (!title) { if (msg) msg.textContent = "Title is required."; return; }
+  const order = Number((orderEl ? orderEl.value : "999") || 999);
 
   const safe = title.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g,"");
   const prefix = (kind === "ROLE") ? "R_CUSTOM_" : "T_CUSTOM_";
@@ -1057,19 +1137,7 @@ async function addItemFromForm(){
   await refreshItems();
 }
 
-async function loadAdminGroup(){
-  if (!state.adminGroupId) return;
-  const res = await apiGet("getGroup", { groupId: state.adminGroupId, viewer:"admin" });
-  if (!res.ok) { alert(res.error || "Could not load group"); return; }
-
-  state.taskStatus = res.taskStatus || {};
-  state.adminMembers = res.members || [];
-  state.adminAssignmentsByStudent = res.assignmentsByStudent || {};
-
-  renderTasks();
-  renderAdminRoleAssign();
-}
-
+/* -------- Login + wiring -------- */
 async function login(){
   qs("loginError").textContent = "";
   const code = qs("loginCode").value.trim();
@@ -1083,28 +1151,38 @@ async function login(){
   state.calendar = res.calendar || [];
   state.settings = res.settings || state.settings;
   state.currentDayNo = Number(res.currentDayNo || 1);
-  state.selectedDayNo = Number(localStorage.getItem("tinyhome_dayNo") || state.currentDayNo);
 
-  const dayNos = state.calendar.map(d => Number(d.DayNo));
-  if (!dayNos.includes(state.selectedDayNo)) state.selectedDayNo = state.currentDayNo;
+  // default selected day: today (and clamp student to today/tomorrow)
+  const saved = Number(localStorage.getItem("tinyhome_dayNo") || state.currentDayNo);
+  state.selectedDayNo = saved;
+
+  if (state.role === "student") {
+    // clamp
+    if (![state.currentDayNo, state.currentDayNo+1].includes(state.selectedDayNo)) state.selectedDayNo = state.currentDayNo;
+  } else {
+    // clamp to existing day numbers
+    const dayNos = state.calendar.map(d => Number(d.DayNo));
+    if (!dayNos.includes(state.selectedDayNo)) state.selectedDayNo = state.currentDayNo;
+  }
 
   qs("viewLogin").classList.add("hidden");
   qs("viewMain").classList.remove("hidden");
   qs("btnLogout").classList.remove("hidden");
-
-  buildDaySelect();
-  renderTodayNote();
 
   if (state.role === "student") {
     state.user = res.user;
     state.assignments = res.assignments || [];
     state.roleChecks = res.roleChecks || {};
     state.taskStatus = res.taskStatus || {};
+    state.summary = res.summary || state.summary;
 
     setSubtitle(`${state.user.name} • ${state.user.className} • Group ${state.user.groupId}`);
     qs("who").textContent = `Student: ${state.user.name} | Class: ${state.user.className} | Group: ${state.user.groupName || state.user.groupId}`;
+
     qs("adminPanel").classList.add("hidden");
 
+    buildDaySelect();
+    renderTodayNote();
     renderRoles();
     renderTasks();
     return;
@@ -1114,9 +1192,10 @@ async function login(){
   state.adminCode = code;
   state.groups = res.groups || [];
   setSubtitle("Teacher / Admin");
-
   qs("who").textContent = "Admin mode: approve tasks, assign roles, and manage items.";
   qs("adminPanel").classList.remove("hidden");
+
+  placeAdminPanelOnTop();
 
   const gsel = qs("groupSelect");
   gsel.innerHTML = "";
@@ -1135,15 +1214,17 @@ async function login(){
     await loadAdminGroup();
   };
 
-  // wire admin buttons if blocks exist
   if (qs("btnAddItem")) qs("btnAddItem").onclick = addItemFromForm;
   if (qs("btnRefreshItems")) qs("btnRefreshItems").onclick = refreshItems;
   if (qs("filterKind")) qs("filterKind").onchange = renderItemsManager;
   if (qs("filterStage")) qs("filterStage").onchange = renderItemsManager;
 
+  buildDaySelect();
+  renderTodayNote();
+
   await loadAdminGroup();
   renderItemsManager();
-  renderRoles(); // shows admin message
+  renderRoles();
 }
 
 function logout(){
@@ -1151,9 +1232,9 @@ function logout(){
     role:null,user:null,items:[],calendar:[],
     settings: state.settings,
     currentDayNo:1,selectedDayNo:1,
-    assignments:[],roleChecks:{},taskStatus:{},
+    assignments:[],roleChecks:{},taskStatus:{},summary:{earnedPoints:0,unfinishedCount:0},
     groups:[],adminGroupId:null,adminCode:null,
-    adminMembers:[],adminAssignmentsByStudent:{}
+    adminMembers:[],adminDailyAssignmentsByStudent:{},adminRoleChecksByStudent:{}
   };
   qs("viewMain").classList.add("hidden");
   qs("viewLogin").classList.remove("hidden");
