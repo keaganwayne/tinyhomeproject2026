@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tiny Home Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7f6f3;
+    --card:#ffffff;
+    --ink:#1f2328;
+    --muted:#6b7280;
+    --line:#e6e2da;
+    --accent:#4a5e4a;
+    --warn:#b45309;
+    --bad:#b91c1c;
+    --good:#15803d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"DM Sans",system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px}
+  .topbar{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .brand{display:flex;gap:10px;align-items:center}
+  .logo{width:34px;height:34px;border-radius:10px;background:var(--accent);display:inline-block}
+  h1{font-size:18px;margin:0}
+  .small{color:var(--muted);font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:900px){ .grid{grid-template-columns:360px 1fr} }
+  label{font-size:13px;color:var(--muted)}
+  input,select,button,textarea{
+    font:inherit;border-radius:12px;border:1px solid var(--line);
+    padding:10px 12px;background:#fff
+  }
+  button{cursor:pointer}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  button.ghost{background:transparent}
+  .row{display:flex;gap:10px;align-items:center}
+  .row.wrap{flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:var(--muted);background:#fff}
+  .pill.good{border-color:rgba(21,128,61,.25);color:var(--good)}
+  .pill.warn{border-color:rgba(180,83,9,.25);color:var(--warn)}
+  .pill.bad{border-color:rgba(185,28,28,.25);color:var(--bad)}
+  .sectionTitle{font-size:14px;margin:0 0 8px 0}
+  .list{display:flex;flex-direction:column;gap:8px}
+  .item{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;border:1px solid var(--line);border-radius:14px;padding:10px 10px;background:#fff}
+  .item .left{display:flex;gap:10px;align-items:flex-start;min-width:0}
+  .item .txt{min-width:0}
+  .item .title{font-weight:600;font-size:14px;line-height:1.2;margin:0}
+  .item .meta{font-size:12px;color:var(--muted);margin-top:4px}
+  .help{
+    position:relative;display:inline-flex;align-items:center;justify-content:center;
+    width:22px;height:22px;border-radius:999px;border:1px solid var(--line);
+    color:var(--muted);font-weight:700;flex:0 0 auto;user-select:none
+  }
+  .help:hover{border-color:#c9c4bb;color:#3f4651}
+  .help .tip{
+    display:none;position:absolute;z-index:30;left:50%;transform:translateX(-50%);
+    top:28px;min-width:240px;max-width:360px;
+    background:#111827;color:#fff;border-radius:12px;padding:10px 10px;font-size:12px;line-height:1.35;
+    box-shadow:0 10px 30px rgba(0,0,0,.18)
+  }
+  .help .tip:before{
+    content:"";position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+    border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:6px solid #111827;
+  }
+  .help:hover .tip, .help:focus .tip, .help[data-open="1"] .tip{display:block}
+  .badge{font-size:12px;color:#fff;border-radius:999px;padding:4px 10px;font-weight:700}
+  .b0{background:#6b7280}
+  .b1{background:#2563eb}
+  .b2{background:#b45309}
+  .b3{background:#15803d}
+  .b4{background:#b91c1c}
+  .muted{color:var(--muted)}
+  .divider{height:1px;background:var(--line);margin:10px 0}
+  .hidden{display:none !important}
+  .note{font-size:12px;color:var(--muted)}
+  textarea{width:100%;min-height:68px;resize:vertical}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <span class="logo"></span>
+      <div>
+        <h1 id="appTitle">Tiny Home Tracker</h1>
+        <div class="small" id="subtitle">Login to start</div>
+      </div>
+    </div>
+    <button id="btnLogout" class="ghost hidden">Log out</button>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="viewLogin" class="card">
+    <div class="row wrap" style="justify-content:space-between">
+      <div style="flex:1;min-width:260px">
+        <div class="sectionTitle">Login</div>
+        <div class="note">Enter your code. Students use their student code. Teachers use the admin code.</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <input id="loginCode" placeholder="Enter code" style="flex:1;max-width:320px" />
+      <button id="btnLogin" class="primary">Login</button>
+    </div>
+    <div id="loginError" class="note" style="color:var(--bad);margin-top:10px"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="viewMain" class="grid hidden">
+    <!-- LEFT -->
+    <div class="card">
+      <div class="sectionTitle">Today</div>
+      <div id="who" class="note"></div>
+      <div class="divider"></div>
+
+      <label for="daySelect">Project Day</label>
+      <select id="daySelect" style="width:100%;margin-top:6px"></select>
+      <div id="dayNote" class="note" style="margin-top:8px"></div>
+
+      <div class="divider"></div>
+      <div class="row wrap" style="justify-content:space-between;gap:8px">
+        <div>
+          <div class="sectionTitle">Your responsibilities</div>
+          <div class="note">Pick roles if you have none yet. Tick “Done today” when you did your role.</div>
+        </div>
+        <div class="pill" id="pointsPill">Points: 0</div>
+      </div>
+
+      <div id="rolesList" class="list" style="margin-top:10px"></div>
+
+      <div id="rolePicker" class="hidden" style="margin-top:10px">
+        <div class="divider"></div>
+        <div class="sectionTitle">Pick a role</div>
+        <div id="availableRoles" class="list"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="card">
+      <div class="row wrap" style="justify-content:space-between;gap:8px">
+        <div>
+          <div class="sectionTitle" id="tasksTitle">Group tasks</div>
+          <div class="note">Students: use Not started / Doing / Ready for teacher. Teacher: can set OK ✅ or Fix ⚠️.</div>
+        </div>
+        <div class="row wrap">
+          <span class="pill" id="progressPill">Progress</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div id="tasksList" class="list"></div>
+
+      <!-- Admin tools -->
+      <div id="adminPanel" class="hidden" style="margin-top:14px">
+        <div class="divider"></div>
+        <div class="sectionTitle">Admin: choose a group</div>
+        <select id="groupSelect" style="width:100%;margin-top:6px"></select>
+        <div class="note" style="margin-top:8px">Tip: use “Fix ⚠️” with a short note so students know what to change.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/** IMPORTANT:
+ *  Do NOT add custom headers. That can trigger CORS preflight and fail.
+ *  Keep POST as a simple request (body only).
+ */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfFy15F0G7b0kLD32VlbBfeGLZ_gRCqf1xV5BXpnrMAg7Y0iX96x8U6tZc4U2-ewL9tg/exec"; // .../exec
+
+const STATUS = {
+  NOT_STARTED: {label:"Not started", badge:"b0"},
+  DOING: {label:"Doing now", badge:"b1"},
+  READY: {label:"Ready for teacher", badge:"b2"},
+  OK: {label:"Checked OK ✅", badge:"b3"},
+  FIX: {label:"Fix this ⚠️", badge:"b4"},
+};
+
+let state = {
+  role: null,            // "student" or "admin"
+  user: null,            // student user object
+  items: [],             // all tasks/roles
+  calendar: [],
+  currentDayNo: 1,
+  selectedDayNo: 1,
+  assignments: [],       // roleIds for student
+  roleChecks: {},        // roleId -> boolean
+  taskStatus: {},        // taskId -> {status,note,...}
+  groups: [],            // admin group list
+  adminGroupId: null,
+};
+
+function qs(id){ return document.getElementById(id); }
+
+async function apiGet(action, params={}){
+  const url = new URL(SCRIPT_URL);
+  url.searchParams.set("action", action);
+  for (const [k,v] of Object.entries(params)) url.searchParams.set(k, v);
+  const res = await fetch(url.toString());
+  return await res.json();
+}
+
+async function apiPost(payload){
+  const res = await fetch(SCRIPT_URL, { method:"POST", body: JSON.stringify(payload) });
+  return await res.json();
+}
+
+function setSubtitle(text){ qs("subtitle").textContent = text; }
+
+function stageName(stage){
+  if (Number(stage) === 0) return "No project day";
+  return "Stage " + stage;
+}
+
+function buildDaySelect(){
+  const sel = qs("daySelect");
+  sel.innerHTML = "";
+  state.calendar.forEach(d => {
+    const opt = document.createElement("option");
+    opt.value = d.DayNo;
+    opt.textContent = `${d.Label} — ${stageName(d.Stage)}`;
+    sel.appendChild(opt);
+  });
+  sel.value = String(state.selectedDayNo);
+  sel.onchange = () => {
+    state.selectedDayNo = Number(sel.value);
+    localStorage.setItem("tinyhome_dayNo", String(state.selectedDayNo));
+    renderTodayNote();
+    renderTasks();
+    renderRoles();
+  };
+}
+
+function renderTodayNote(){
+  const day = state.calendar.find(x => Number(x.DayNo) === Number(state.selectedDayNo));
+  if (!day){ qs("dayNote").textContent = ""; return; }
+  qs("dayNote").textContent = day.Note || "";
+}
+
+function isRole(item){ return String(item.Kind).toUpperCase() === "ROLE"; }
+function isTask(item){ return String(item.Kind).toUpperCase() === "TASK"; }
+
+function filterRolesForStage(stage){
+  return state.items.filter(it => isRole(it) && (String(it.Stage)==="ALL" || Number(it.Stage)===Number(stage)));
+}
+function filterTasksForStage(stage){
+  return state.items.filter(it => isTask(it) && Number(it.Stage)===Number(stage));
+}
+
+function rolePoints(roleId){
+  const it = state.items.find(x => x.ItemID === roleId);
+  return it ? Number(it.Points || 0) : 0;
+}
+
+function totalPoints(){
+  return (state.assignments || []).reduce((sum, rid) => sum + rolePoints(rid), 0);
+}
+
+function makeHelp(tooltip){
+  const help = document.createElement("span");
+  help.className = "help";
+  help.tabIndex = 0;
+  help.textContent = "?";
+  const tip = document.createElement("span");
+  tip.className = "tip";
+  tip.textContent = tooltip || "No extra info";
+  help.appendChild(tip);
+  help.addEventListener("click", (e) => {
+    // mobile: toggle
+    const isOpen = help.getAttribute("data-open") === "1";
+    help.setAttribute("data-open", isOpen ? "0" : "1");
+    e.stopPropagation();
+  });
+  return help;
+}
+
+function statusBadge(statusKey){
+  const s = STATUS[statusKey] || STATUS.NOT_STARTED;
+  const span = document.createElement("span");
+  span.className = `badge ${s.badge}`;
+  span.textContent = s.label;
+  return span;
+}
+
+function renderRoles(){
+  const day = state.calendar.find(x => Number(x.DayNo) === Number(state.selectedDayNo));
+  const stage = day ? Number(day.Stage) : 1;
+
+  const list = qs("rolesList");
+  list.innerHTML = "";
+
+  const pts = totalPoints();
+  qs("pointsPill").textContent = `Points: ${pts}`;
+
+  // Student roles view
+  if (state.role !== "student") {
+    list.innerHTML = `<div class="note muted">Admin view: roles are shown per student inside the group review (next version).</div>`;
+    qs("rolePicker").classList.add("hidden");
+    return;
+  }
+
+  const assigned = state.assignments || [];
+  if (assigned.length === 0) {
+    list.innerHTML = `<div class="note">You have no roles yet. Pick at least 2 roles.</div>`;
+  }
+
+  assigned.forEach(roleId => {
+    const it = state.items.find(x => x.ItemID === roleId);
+    if (!it) return;
+
+    const row = document.createElement("div");
+    row.className = "item";
+
+    const left = document.createElement("div");
+    left.className = "left";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = !!state.roleChecks[roleId];
+    cb.title = "Done today";
+    cb.addEventListener("change", async () => {
+      await apiPost({ action:"setRoleCheck", dayNo: state.selectedDayNo, studentId: state.user.studentId, roleId, done: cb.checked });
+      state.roleChecks[roleId] = cb.checked;
+    });
+
+    const txt = document.createElement("div");
+    txt.className = "txt";
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = it.Title;
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const st = String(it.Stage);
+    const stageTag = (st === "ALL") ? "All stages" : ("Stage " + st);
+    meta.textContent = `${stageTag} • ${it.Points || 0} pts`;
+
+    txt.appendChild(title);
+    txt.appendChild(meta);
+
+    left.appendChild(cb);
+    left.appendChild(txt);
+
+    row.appendChild(left);
+    row.appendChild(makeHelp(it.Tooltip));
+
+    list.appendChild(row);
+  });
+
+  // Role picker: show roles for current stage + ALL that are not taken by group (single roles)
+  const picker = qs("rolePicker");
+  picker.classList.remove("hidden");
+
+  const availableWrap = qs("availableRoles");
+  availableWrap.innerHTML = "";
+
+  // Build map of "single role taken?" from current assignments data we have (student only).
+  // For true group-level locking, Apps Script enforces it on claimRole.
+  const roles = filterRolesForStage(stage);
+
+  roles.forEach(it => {
+    if (assigned.includes(it.ItemID)) return; // already have it
+
+    const row = document.createElement("div");
+    row.className = "item";
+
+    const left = document.createElement("div");
+    left.className = "left";
+
+    const txt = document.createElement("div");
+    txt.className = "txt";
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = it.Title;
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = `${(String(it.Stage)==="ALL") ? "All stages" : ("Stage "+it.Stage)} • ${it.Points||0} pts`;
+
+    txt.appendChild(title);
+    txt.appendChild(meta);
+
+    left.appendChild(txt);
+
+    const right = document.createElement("div");
+    right.className = "row";
+    const btn = document.createElement("button");
+    btn.textContent = "Pick";
+    btn.className = "primary";
+    btn.style.padding = "8px 12px";
+    btn.addEventListener("click", async () => {
+      const res = await apiPost({ action:"claimRole", studentId: state.user.studentId, roleId: it.ItemID });
+      if (!res.ok) { alert(res.error || "Could not pick role"); return; }
+      state.assignments.push(it.ItemID);
+      renderRoles();
+    });
+
+    right.appendChild(btn);
+    row.appendChild(left);
+    row.appendChild(makeHelp(it.Tooltip));
+    row.appendChild(right);
+
+    availableWrap.appendChild(row);
+  });
+}
+
+function allowedStatusOptions(){
+  if (state.role === "admin") return ["NOT_STARTED","DOING","READY","OK","FIX"];
+  return ["NOT_STARTED","DOING","READY"];
+}
+
+function renderTasks(){
+  const list = qs("tasksList");
+  list.innerHTML = "";
+
+  const day = state.calendar.find(x => Number(x.DayNo) === Number(state.selectedDayNo));
+  const stage = day ? Number(day.Stage) : 1;
+
+  // If not a project day
+  if (stage === 0) {
+    list.innerHTML = `<div class="note">No tiny-home tasks today.</div>`;
+    qs("progressPill").textContent = "Progress: —";
+    return;
+  }
+
+  const tasks = filterTasksForStage(stage);
+  const opts = allowedStatusOptions();
+
+  let okCount = 0;
+  tasks.forEach(t => {
+    const current = state.taskStatus[t.ItemID]?.status || "NOT_STARTED";
+    if (current === "OK") okCount++;
+
+    const row = document.createElement("div");
+    row.className = "item";
+
+    const left = document.createElement("div");
+    left.className = "left";
+
+    const txt = document.createElement("div");
+    txt.className = "txt";
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = t.Title;
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = `Stage ${t.Stage}`;
+
+    txt.appendChild(title);
+    txt.appendChild(meta);
+
+    left.appendChild(txt);
+
+    const right = document.createElement("div");
+    right.style.display = "flex";
+    right.style.flexDirection = "column";
+    right.style.gap = "6px";
+    right.style.alignItems = "flex-end";
+
+    // Status dropdown
+    const sel = document.createElement("select");
+    opts.forEach(k => {
+      const o = document.createElement("option");
+      o.value = k;
+      o.textContent = STATUS[k].label;
+      sel.appendChild(o);
+    });
+    sel.value = current;
+
+    sel.addEventListener("change", async () => {
+      const newStatus = sel.value;
+      const res = await apiPost({
+        action:"setTaskStatus",
+        viewer: state.role,
+        groupId: state.role === "admin" ? state.adminGroupId : state.user.groupId,
+        taskId: t.ItemID,
+        status: newStatus,
+        note: (state.role === "admin") ? (state.taskStatus[t.ItemID]?.note || "") : "",
+        studentId: state.role === "student" ? state.user.studentId : "",
+      });
+      if (!res.ok) { alert(res.error || "Update failed"); sel.value = current; return; }
+      state.taskStatus[t.ItemID] = state.taskStatus[t.ItemID] || {};
+      state.taskStatus[t.ItemID].status = newStatus;
+      renderTasks();
+    });
+
+    // badge
+    const badge = statusBadge(current);
+
+    right.appendChild(badge);
+    right.appendChild(sel);
+
+    // Admin note box
+    if (state.role === "admin") {
+      const ta = document.createElement("textarea");
+      ta.placeholder = "Note (only for teacher)";
+      ta.value = state.taskStatus[t.ItemID]?.note || "";
+      ta.addEventListener("change", async () => {
+        // Save note without changing status
+        const res = await apiPost({
+          action:"setTaskStatus",
+          viewer:"admin",
+          groupId: state.adminGroupId,
+          taskId: t.ItemID,
+          status: state.taskStatus[t.ItemID]?.status || "NOT_STARTED",
+          note: ta.value,
+          studentId: "",
+        });
+        if (!res.ok) alert(res.error || "Could not save note");
+        else {
+          state.taskStatus[t.ItemID] = state.taskStatus[t.ItemID] || {};
+          state.taskStatus[t.ItemID].note = ta.value;
+        }
+      });
+      right.appendChild(ta);
+      const note = document.createElement("div");
+      note.className = "note";
+      note.textContent = "Students can see OK/Fix status. Notes stay for teacher.";
+      right.appendChild(note);
+    }
+
+    row.appendChild(left);
+    row.appendChild(makeHelp(t.Tooltip));
+    row.appendChild(right);
+
+    list.appendChild(row);
+  });
+
+  qs("progressPill").textContent = `Progress: ${okCount}/${tasks.length} checked OK`;
+}
+
+function wireGlobalClicks(){
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".help[data-open='1']").forEach(el => el.setAttribute("data-open","0"));
+  });
+}
+
+async function login(){
+  qs("loginError").textContent = "";
+  const code = qs("loginCode").value.trim();
+  if (!code) { qs("loginError").textContent = "Enter a code"; return; }
+  const res = await apiGet("login", { code });
+
+  if (!res.ok) { qs("loginError").textContent = res.error || "Login failed"; return; }
+
+  state.role = res.role;
+  state.items = res.items || [];
+  state.calendar = res.calendar || [];
+  state.currentDayNo = Number(res.currentDayNo || 1);
+  state.selectedDayNo = Number(localStorage.getItem("tinyhome_dayNo") || state.currentDayNo);
+
+  // clamp
+  const dayNos = state.calendar.map(d => Number(d.DayNo));
+  if (!dayNos.includes(state.selectedDayNo)) state.selectedDayNo = state.currentDayNo;
+
+  qs("viewLogin").classList.add("hidden");
+  qs("viewMain").classList.remove("hidden");
+  qs("btnLogout").classList.remove("hidden");
+
+  buildDaySelect();
+  renderTodayNote();
+
+  if (state.role === "student") {
+    state.user = res.user;
+    state.assignments = res.assignments || [];
+    state.roleChecks = res.roleChecks || {};
+    state.taskStatus = res.taskStatus || {};
+
+    setSubtitle(`${state.user.name} • ${state.user.className} • Group ${state.user.groupId}`);
+    qs("who").textContent = `Student: ${state.user.name} | Class: ${state.user.className} | Group: ${state.user.groupName || state.user.groupId}`;
+    qs("adminPanel").classList.add("hidden");
+    renderRoles();
+    renderTasks();
+    return;
+  }
+
+  // Admin
+  state.groups = res.groups || [];
+  state.taskStatus = {}; // loaded per group
+  setSubtitle("Teacher / Admin");
+
+  qs("who").textContent = "Admin mode: approve tasks and mark Fix ⚠️";
+  qs("adminPanel").classList.remove("hidden");
+
+  const gsel = qs("groupSelect");
+  gsel.innerHTML = "";
+  state.groups.forEach(g => {
+    const opt = document.createElement("option");
+    opt.value = g.GroupID;
+    opt.textContent = `${g.Class || ""} • ${g.GroupName || g.GroupID} (${g.GroupID})`;
+    gsel.appendChild(opt);
+  });
+
+  state.adminGroupId = state.groups[0]?.GroupID || "";
+  gsel.value = state.adminGroupId;
+
+  gsel.onchange = async () => {
+    state.adminGroupId = gsel.value;
+    await loadAdminGroup();
+  };
+
+  await loadAdminGroup();
+  renderRoles(); // shows admin message
+}
+
+async function loadAdminGroup(){
+  if (!state.adminGroupId) return;
+  const res = await apiGet("getGroup", { groupId: state.adminGroupId, viewer:"admin" });
+  if (!res.ok) { alert(res.error || "Could not load group"); return; }
+  state.taskStatus = res.taskStatus || {};
+  renderTasks();
+}
+
+function logout(){
+  state = { role:null,user:null,items:[],calendar:[],currentDayNo:1,selectedDayNo:1,assignments:[],roleChecks:{},taskStatus:{},groups:[],adminGroupId:null };
+  qs("viewMain").classList.add("hidden");
+  qs("viewLogin").classList.remove("hidden");
+  qs("btnLogout").classList.add("hidden");
+  setSubtitle("Login to start");
+  qs("loginCode").value = "";
+}
+
+qs("btnLogin").addEventListener("click", login);
+qs("btnLogout").addEventListener("click", logout);
+wireGlobalClicks();
+</script>
+</body>
+</html>
