@@ -759,27 +759,41 @@ function allowedStatusOptions(){
   return ["NOT_STARTED","DOING","READY"];
 }
 
+function taskStatusKey(taskId){
+  return state.taskStatus[taskId]?.status || "NOT_STARTED";
+}
+function taskNote(taskId){
+  return state.taskStatus[taskId]?.note || "";
+}
+
 function renderTasks(){
   const list = qs("tasksList");
   list.innerHTML = "";
 
-  const stage = getStageForSelectedDay();
-
-  if (stage === 0) {
+  const currentStage = getStageForSelectedDay();
+  if (currentStage === 0) {
     list.innerHTML = `<div class="note">No tiny-home tasks today.</div>`;
     qs("progressPill").textContent = "Progress: —";
     return;
   }
 
-  const tasks = filterTasksForStage(stage);
-  const opts = allowedStatusOptions();
-  const studentInteractive = interactiveStudentDay();
+  const allTasks = state.items.filter(isTask).map(t => ({...t, stageNum:Number(t.Stage||0)}));
+  const unfinishedPrev = allTasks.filter(t => t.stageNum < currentStage && taskStatusKey(t.ItemID) !== "OK");
+  const completedPrev  = allTasks.filter(t => t.stageNum < currentStage && taskStatusKey(t.ItemID) === "OK");
+  const currentTasks   = allTasks.filter(t => t.stageNum === currentStage);
 
-  let okCount = 0;
-  tasks.forEach(t => {
-    const current = state.taskStatus[t.ItemID]?.status || "NOT_STARTED";
-    if (current === "OK") okCount++;
+  // popup once per day (students only, only on TODAY)
+  if (state.role === "student" && interactiveStudentDay() && unfinishedPrev.length) {
+    const key = `tinyhome_unfinished_warn_${state.currentDayNo}`;
+    if (localStorage.getItem(key) !== "1") {
+      localStorage.setItem(key, "1");
+      alert(`You still have ${unfinishedPrev.length} unfinished task(s) from earlier stages.\n\nFinish them before moving on.`);
+    }
+  }
 
+  // helper to render a task row
+  const renderTaskRow = (t, sectionLabel) => {
+    const current = taskStatusKey(t.ItemID);
     const row = document.createElement("div");
     row.className = "item";
 
@@ -795,7 +809,7 @@ function renderTasks(){
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = `Stage ${t.Stage}`;
+    meta.textContent = `${sectionLabel} • Stage ${t.Stage}`;
 
     txt.appendChild(title);
     txt.appendChild(meta);
@@ -807,19 +821,48 @@ function renderTasks(){
     right.style.gap = "6px";
     right.style.alignItems = "flex-end";
 
+    // build dropdown options, but ensure current status is visible even if not in student options
+    const baseOpts = allowedStatusOptions();
+    const keys = baseOpts.includes(current) ? baseOpts : [current, ...baseOpts];
+
     const sel = document.createElement("select");
-    opts.forEach(k => {
+    keys.forEach(k => {
       const o = document.createElement("option");
       o.value = k;
-      o.textContent = STATUS[k].label;
+      o.textContent = (STATUS[k] ? STATUS[k].label : k);
       sel.appendChild(o);
     });
     sel.value = current;
 
-    if (state.role === "student" && !studentInteractive) sel.disabled = true;
+    // LOCKING RULES:
+    // - Students cannot change if teacher marked OK or FIX
+    // - Students also cannot edit on preview day
+    const studentLocked = (state.role === "student") && (!interactiveStudentDay() || current === "OK" || current === "FIX");
+    if (studentLocked) sel.disabled = true;
+
+    // If student sees FIX and there is a teacher note, show it
+    if (state.role === "student" && current === "FIX" && taskNote(t.ItemID)) {
+      const n = document.createElement("div");
+      n.className = "note";
+      n.textContent = `Teacher note: ${taskNote(t.ItemID)}`;
+      right.appendChild(n);
+    }
 
     sel.addEventListener("change", async () => {
+      // extra safety: refuse student change when locked
+      if (state.role === "student" && (current === "OK" || current === "FIX")) {
+        sel.value = current;
+        return;
+      }
+
       const newStatus = sel.value;
+
+      // If admin is changing an OK task, force a confirm (optional safety)
+      if (state.role === "admin" && current === "OK" && newStatus !== "OK") {
+        const ok = confirm("This task is already Checked OK. Change it anyway?");
+        if (!ok) { sel.value = current; return; }
+      }
+
       const res = await apiPost({
         action:"setTaskStatus",
         viewer: state.role,
@@ -827,9 +870,10 @@ function renderTasks(){
         groupId: state.role === "admin" ? state.adminGroupId : state.user.groupId,
         taskId: t.ItemID,
         status: newStatus,
-        note: (state.role === "admin") ? (state.taskStatus[t.ItemID]?.note || "") : "",
+        note: (state.role === "admin") ? (taskNote(t.ItemID)) : "",
         studentId: state.role === "student" ? state.user.studentId : "",
       });
+
       if (!res.ok) { alert(res.error || "Update failed"); sel.value = current; return; }
       state.taskStatus[t.ItemID] = state.taskStatus[t.ItemID] || {};
       state.taskStatus[t.ItemID].status = newStatus;
@@ -839,10 +883,11 @@ function renderTasks(){
     right.appendChild(statusBadge(current));
     right.appendChild(sel);
 
+    // admin note box (unchanged)
     if (state.role === "admin") {
       const ta = document.createElement("textarea");
       ta.placeholder = "Teacher note (optional)";
-      ta.value = state.taskStatus[t.ItemID]?.note || "";
+      ta.value = taskNote(t.ItemID);
       ta.addEventListener("change", async () => {
         const res = await apiPost({
           action:"setTaskStatus",
@@ -850,7 +895,7 @@ function renderTasks(){
           dayNo: state.selectedDayNo,
           groupId: state.adminGroupId,
           taskId: t.ItemID,
-          status: state.taskStatus[t.ItemID]?.status || "NOT_STARTED",
+          status: taskStatusKey(t.ItemID),
           note: ta.value,
           studentId: "",
         });
@@ -866,11 +911,56 @@ function renderTasks(){
     row.appendChild(left);
     row.appendChild(makeHelp(t.Tooltip));
     row.appendChild(right);
+    return row;
+  };
 
-    list.appendChild(row);
+  // SECTION 1: Missions (unfinished previous stage tasks)
+  if (unfinishedPrev.length) {
+    const hdr = document.createElement("div");
+    hdr.className = "note";
+    hdr.style.margin = "6px 0";
+    hdr.textContent = `Unfinished tasks from earlier stages (${unfinishedPrev.length})`;
+    list.appendChild(hdr);
+
+    unfinishedPrev.forEach(t => list.appendChild(renderTaskRow(t, "Unfinished")));
+    const div = document.createElement("div"); div.className = "divider";
+    list.appendChild(div);
+  }
+
+  // SECTION 2: Current stage tasks
+  const hdr2 = document.createElement("div");
+  hdr2.className = "note";
+  hdr2.style.margin = "6px 0";
+  hdr2.textContent = `Current stage tasks (Stage ${currentStage})`;
+  list.appendChild(hdr2);
+
+  let okCount = 0;
+  currentTasks.forEach(t => {
+    if (taskStatusKey(t.ItemID) === "OK") okCount++;
+    list.appendChild(renderTaskRow(t, "Current"));
   });
 
-  qs("progressPill").textContent = `Progress: ${okCount}/${tasks.length} checked OK`;
+  qs("progressPill").textContent = `Progress: ${okCount}/${currentTasks.length} checked OK`;
+
+  // SECTION 3: Completed previous stage tasks (collapsed)
+  if (completedPrev.length) {
+    const details = document.createElement("details");
+    details.style.marginTop = "10px";
+
+    const summary = document.createElement("summary");
+    summary.className = "note";
+    summary.style.cursor = "pointer";
+    summary.textContent = `Completed tasks (earlier stages) — ${completedPrev.length}`;
+    details.appendChild(summary);
+
+    const inner = document.createElement("div");
+    inner.className = "list";
+    inner.style.marginTop = "10px";
+
+    completedPrev.forEach(t => inner.appendChild(renderTaskRow(t, "Completed")));
+    details.appendChild(inner);
+    list.appendChild(details);
+  }
 }
 
 /* ======================= ADMIN REDESIGN ======================= */
@@ -1344,7 +1434,50 @@ async function addItemFromForm(){
   await refreshItems();
   renderItemsManager();
 }
+async function maybeOfferRoleCarryOver(){
+  if (state.role !== "student") return;
+  if (state.selectedDayNo !== state.currentDayNo) return;   // only offer on TODAY
+  if ((state.assignments || []).length > 0) return;         // already picked today
+  if (state.currentDayNo <= 1) return;
 
+  const prevDay = state.currentDayNo - 1;
+  const prev = await apiGet("getStudentDay", { studentId: state.user.studentId, dayNo: prevDay });
+  if (!prev.ok) return;
+
+  const prevRoles = prev.assignments || [];
+  if (!prevRoles.length) return;
+
+  const todayStage = getStageForSelectedDay();
+  const available = new Set(filterRolesForStage(todayStage).map(r => r.ItemID));
+  const carry = prevRoles.filter(rid => available.has(rid));
+  if (!carry.length) return;
+
+  const names = carry
+    .map(rid => (state.items.find(x => x.ItemID === rid)?.Title || rid))
+    .slice(0, 6)
+    .join(", ") + (carry.length > 6 ? "…" : "");
+
+  const keep = confirm(`Yesterday you had: ${names}\n\nKeep the same roles for today?`);
+  if (!keep) return;
+
+  const failed = [];
+  for (const rid of carry) {
+    const r = await apiPost({
+      action:"claimRole",
+      studentId: state.user.studentId,
+      roleId: rid,
+      dayNo: state.currentDayNo,
+      confirm: true
+    });
+    if (!r.ok) failed.push(rid);
+  }
+
+  await loadStudentDay(state.currentDayNo);
+
+  if (failed.length) {
+    alert("Some roles could not be kept (maybe already taken). Pick new roles for today.");
+  }
+}
 /* ---------------- LOGIN ---------------- */
 async function login(){
   qs("loginError").textContent = "";
@@ -1394,7 +1527,7 @@ async function login(){
     // admin panels
     qs("adminTop")?.classList.add("hidden");
     qs("adminPanel")?.classList.add("hidden");
-
+    await maybeOfferRoleCarryOver();
     renderRoles();
     renderTasks();
     return;
@@ -1481,5 +1614,6 @@ document.addEventListener("click", () => {
   document.querySelectorAll(".help[data-open='1']").forEach(el => el.setAttribute("data-open","0"));
 });
 </script>
+</div> <!-- end .wrap -->
 </body>
 </html>
