@@ -108,18 +108,23 @@
   </div>
 
   <!-- MAIN -->
-  <div id="viewMain" class="grid hidden">
-    <!-- LEFT -->
-    <div class="card">
-      <div class="sectionTitle">Today</div>
-      <div id="who" class="note"></div>
-      <div class="divider"></div>
+<div id="viewMain" class="grid hidden">
 
-      <label for="daySelect">Project Day</label>
-      <select id="daySelect" style="width:100%;margin-top:6px"></select>
-      <div id="dayNote" class="note" style="margin-top:8px"></div>
+  <!-- LEFT (Card) -->
+  <div class="card">
+    <div class="sectionTitle">Today</div>
+    <div id="who" class="note"></div>
 
-      <div class="divider"></div>
+    <div class="divider"></div>
+
+    <label for="daySelect">Project Day</label>
+    <select id="daySelect" style="width:100%;margin-top:6px"></select>
+    <div id="dayNote" class="note" style="margin-top:8px"></div>
+
+    <div class="divider"></div>
+
+    <!-- STUDENT LEFT -->
+    <div id="studentLeft">
       <div class="row wrap" style="justify-content:space-between;gap:8px">
         <div>
           <div class="sectionTitle">Your responsibilities</div>
@@ -137,103 +142,156 @@
       </div>
     </div>
 
-    <!-- RIGHT -->
-    <div class="card">
-      <div class="row wrap" style="justify-content:space-between;gap:8px">
-        <div>
-          <div class="sectionTitle" id="tasksTitle">Group tasks</div>
-          <div class="note">Students: use Not started / Doing / Ready for teacher. Teacher: can set OK ✅ or Fix ⚠️.</div>
-        </div>
-        <div class="row wrap">
-          <span class="pill" id="progressPill">Progress</span>
+    <!-- ADMIN LEFT -->
+    <div id="adminLeft" class="hidden">
+      <div class="sectionTitle">Class overview</div>
+      <div id="adminClassLabel" class="note"></div>
+
+      <div class="row wrap" style="gap:8px;margin-top:8px">
+        <span class="badge b0">NS</span>
+        <span class="badge b1">DO</span>
+        <span class="badge b2">RDY</span>
+      </div>
+
+      <div id="classOverview" class="list" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT (Card) -->
+  <div class="card">
+
+    <!-- ADMIN TOP (group selector always above tasks) -->
+    <div id="adminTop" class="hidden">
+      <div class="sectionTitle">Admin: choose a group</div>
+      <select id="groupSelect" style="width:100%;margin-top:6px"></select>
+      <div id="adminGroupMeta" class="note" style="margin-top:8px"></div>
+      <div class="divider"></div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="row wrap" style="justify-content:space-between;gap:8px">
+      <div>
+        <div class="sectionTitle" id="tasksTitle">Group tasks</div>
+        <div class="note">Students: use Not started / Doing / Ready for teacher. Teacher: can set OK ✅ or Fix ⚠️.</div>
+      </div>
+      <div class="row wrap">
+        <span class="pill" id="progressPill">Progress</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div id="tasksList" class="list"></div>
+
+    <!-- ADMIN TABS -->
+    <div id="adminPanel" class="hidden" style="margin-top:14px">
+      <div class="divider"></div>
+
+      <div class="row wrap" style="gap:8px;margin-top:10px">
+        <button id="tabBtnOverview" class="primary">Who’s doing what</button>
+        <button id="tabBtnAssign" class="ghost">Assign roles</button>
+        <button id="tabBtnManage" class="ghost">Manage tasks (optional)</button>
+      </div>
+
+      <div id="adminTabOverview" style="margin-top:10px">
+        <div id="adminWhoDoing" class="list"></div>
+      </div>
+
+      <div id="adminTabAssign" class="hidden" style="margin-top:10px">
+        <div class="card" style="padding:12px;border-radius:14px">
+          <label>Student</label>
+          <select id="adminStudentSelect" style="width:100%;margin-top:6px"></select>
+
+          <div class="divider"></div>
+
+          <label>Role</label>
+          <select id="adminRoleSelect" style="width:100%;margin-top:6px"></select>
+
+          <div class="row wrap" style="gap:10px;margin-top:10px;justify-content:flex-end">
+            <button id="btnAdminAssignRole" class="primary">Assign</button>
+          </div>
+
+          <div class="divider"></div>
+          <div class="sectionTitle">This student’s roles (today)</div>
+          <div id="adminStudentRoles" class="list"></div>
         </div>
       </div>
 
-      <div class="divider"></div>
-      <div id="tasksList" class="list"></div>
+      <div id="adminTabManage" class="hidden" style="margin-top:10px">
+        <details>
+          <summary class="note" style="cursor:pointer">Open manage tasks & roles</summary>
 
-      <!-- Admin tools -->
-      <div id="adminPanel" class="hidden" style="margin-top:14px">
-        <div class="divider"></div>
-        <div class="sectionTitle">Admin: choose a group</div>
-        <select id="groupSelect" style="width:100%;margin-top:6px"></select>
-        <div class="note" style="margin-top:8px">Tip: use “Fix ⚠️” with a short note so students know what to change.</div>
-      <div class="divider"></div>
-<div class="sectionTitle">Admin: role assignment (group)</div>
-<div class="note">Assign roles to students. Single-owner roles can only be held by one student in the group.</div>
-<div id="adminRoleAssign" class="list" style="margin-top:10px"></div>
+          <div class="card" style="margin-top:10px;padding:12px;border-radius:14px">
+            <div class="row wrap" style="gap:10px">
+              <div style="flex:1;min-width:140px">
+                <label>Kind</label>
+                <select id="newKind" style="width:100%;margin-top:6px">
+                  <option value="TASK">TASK</option>
+                  <option value="ROLE">ROLE</option>
+                </select>
+              </div>
+              <div style="flex:1;min-width:140px">
+                <label>Stage</label>
+                <select id="newStage" style="width:100%;margin-top:6px">
+                  <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                  <option value="ALL">ALL</option>
+                </select>
+              </div>
+              <div style="flex:2;min-width:220px">
+                <label>Title (simple)</label>
+                <input id="newTitle" style="width:100%;margin-top:6px" placeholder="Example: Cut walls straight" />
+              </div>
+            </div>
 
-<div class="divider"></div>
-<div class="sectionTitle">Admin: manage tasks & roles</div>
-<div class="note">Add new tasks/roles or deactivate items. Deactivate is safer than deleting.</div>
+            <div class="row wrap" style="gap:10px;margin-top:10px">
+              <div style="flex:2;min-width:220px">
+                <label>Tooltip (details + examples)</label>
+                <input id="newTooltip" style="width:100%;margin-top:6px" placeholder="Example: Use metal ruler. Slow cuts." />
+              </div>
+              <div style="flex:1;min-width:140px">
+                <label>Points (roles only)</label>
+                <input id="newPoints" style="width:100%;margin-top:6px" placeholder="2" />
+              </div>
+              <div style="flex:1;min-width:140px">
+                <label>Single owner?</label>
+                <select id="newSingle" style="width:100%;margin-top:6px">
+                  <option value="FALSE">No</option>
+                  <option value="TRUE">Yes</option>
+                </select>
+              </div>
+              <div style="flex:1;min-width:140px">
+                <label>Order</label>
+                <input id="newOrder" style="width:100%;margin-top:6px" placeholder="999" />
+              </div>
+            </div>
 
-<div class="card" style="margin-top:10px;padding:12px;border-radius:14px">
-  <div class="row wrap" style="gap:10px">
-    <div style="flex:1;min-width:140px">
-      <label>Kind</label>
-      <select id="newKind" style="width:100%;margin-top:6px">
-        <option value="TASK">TASK</option>
-        <option value="ROLE">ROLE</option>
-      </select>
-    </div>
-    <div style="flex:1;min-width:140px">
-      <label>Stage</label>
-      <select id="newStage" style="width:100%;margin-top:6px">
-        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
-        <option value="ALL">ALL</option>
-      </select>
-    </div>
-    <div style="flex:2;min-width:220px">
-      <label>Title (simple)</label>
-      <input id="newTitle" style="width:100%;margin-top:6px" placeholder="Example: Cut walls straight" />
-    </div>
-  </div>
+            <div class="row wrap" style="gap:10px;margin-top:10px;justify-content:flex-end">
+              <button id="btnAddItem" class="primary">Add item</button>
+              <button id="btnRefreshItems" class="ghost">Refresh</button>
+            </div>
+            <div id="addItemMsg" class="note" style="margin-top:8px;color:var(--bad)"></div>
 
-  <div class="row wrap" style="gap:10px;margin-top:10px">
-    <div style="flex:2;min-width:220px">
-      <label>Tooltip (details + examples)</label>
-      <input id="newTooltip" style="width:100%;margin-top:6px" placeholder="Example: Use metal ruler. Fingers behind ruler. Slow cuts." />
-    </div>
-    <div style="flex:1;min-width:140px">
-      <label>Points (roles only)</label>
-      <input id="newPoints" style="width:100%;margin-top:6px" placeholder="2" />
-    </div>
-    <div style="flex:1;min-width:140px">
-      <label>Single owner?</label>
-      <select id="newSingle" style="width:100%;margin-top:6px">
-        <option value="FALSE">No</option>
-        <option value="TRUE">Yes</option>
-      </select>
-    </div>
-    <div style="flex:1;min-width:140px">
-      <label>Order</label>
-      <input id="newOrder" style="width:100%;margin-top:6px" placeholder="999" />
-    </div>
-  </div>
+            <details style="margin-top:10px">
+              <summary class="note" style="cursor:pointer">Open filters</summary>
+              <div class="row wrap" style="gap:10px;margin-top:6px">
+                <select id="filterKind">
+                  <option value="ALL">All kinds</option>
+                  <option value="TASK">TASK</option>
+                  <option value="ROLE">ROLE</option>
+                </select>
+                <select id="filterStage">
+                  <option value="ALL">All stages</option>
+                  <option value="1">Stage 1</option><option value="2">Stage 2</option><option value="3">Stage 3</option><option value="4">Stage 4</option>
+                  <option value="ALL_STAGE">Stage=ALL</option>
+                </select>
+              </div>
+            </details>
 
-  <div class="row wrap" style="gap:10px;margin-top:10px;justify-content:flex-end">
-    <button id="btnAddItem" class="primary">Add item</button>
-  </div>
-  <div id="addItemMsg" class="note" style="margin-top:8px;color:var(--bad)"></div>
-</div>
-
-<div class="divider"></div>
-<label>Filter</label>
-<div class="row wrap" style="gap:10px;margin-top:6px">
-  <select id="filterKind">
-    <option value="ALL">All kinds</option>
-    <option value="TASK">TASK</option>
-    <option value="ROLE">ROLE</option>
-  </select>
-  <select id="filterStage">
-    <option value="ALL">All stages</option>
-    <option value="1">Stage 1</option><option value="2">Stage 2</option><option value="3">Stage 3</option><option value="4">Stage 4</option>
-    <option value="ALL_STAGE">Stage=ALL</option>
-  </select>
-  <button id="btnRefreshItems" class="ghost">Refresh items</button>
-</div>
-
-<div id="itemsManager" class="list" style="margin-top:10px"></div>
+            <details style="margin-top:10px">
+              <summary class="note" style="cursor:pointer">Show items list</summary>
+              <div id="itemsManager" class="list" style="margin-top:10px"></div>
+            </details>
+          </div>
+        </details>
       </div>
     </div>
   </div>
@@ -270,8 +328,8 @@ let state = {
   adminCode: null,
 
   adminMembers: [],
-  adminDailyAssignmentsByStudent: {},
-  adminRoleChecksByStudent: {},
+  adminAssignmentsByStudent: {},  // {studentId:[roleId...]}
+  adminRoleChecksByStudent: {},   // {studentId:{roleId:{done,note}}}
 };
 
 function qs(id){ return document.getElementById(id); }
@@ -355,6 +413,14 @@ function statusBadge(statusKey){
   return span;
 }
 
+function englishName(full){
+  const s = String(full || "");
+  const m = s.match(/\(([^)]+)\)/);
+  if (m) return m[1].trim();
+  return s.split(" ")[0].trim();
+}
+
+/* ---------------- DAY SELECT ---------------- */
 function buildDaySelect(){
   const sel = qs("daySelect");
   sel.innerHTML = "";
@@ -398,10 +464,12 @@ function buildDaySelect(){
       return;
     }
 
-    // admin: day changes -> reload group view
+    // admin
     await loadAdminGroup();
     renderTasks();
-    renderRoles();
+    renderAdminWhoDoing();
+    renderAdminAssignUI();
+    await renderAdminClassOverview();
   };
 }
 
@@ -417,6 +485,7 @@ function renderTodayNote(){
   note.textContent = day.Note || "";
 }
 
+/* ---------------- STUDENT DAY LOAD ---------------- */
 async function loadStudentDay(dayNo){
   const res = await apiGet("getStudentDay", { studentId: state.user.studentId, dayNo: dayNo });
   if (!res.ok) { alert(res.error || "Could not load day"); return; }
@@ -451,8 +520,8 @@ function updatePointsPill(){
   else pill.className = "pill good";
 }
 
-/* -------- Student roles (daily + notes) -------- */
-let noteTimers = {}; // roleId -> timeout
+/* ---------------- STUDENT ROLES (unchanged) ---------------- */
+let noteTimers = {};
 
 async function saveRoleCheck(roleId, done, note){
   const payload = {
@@ -504,12 +573,7 @@ function renderRoles(){
 
   updatePointsPill();
 
-  // Admin: no left-side roles
-  if (state.role === "admin") {
-    list.innerHTML = `<div class="note muted">Admin: use the role assignment panel on the right.</div>`;
-    qs("rolePicker").classList.add("hidden");
-    return;
-  }
+  if (state.role === "admin") return; // admin left panel replaces this entirely
 
   const interactive = interactiveStudentDay();
   const assigned = state.assignments || [];
@@ -520,7 +584,6 @@ function renderRoles(){
     list.innerHTML = `<div class="note">No roles picked for today yet.</div>`;
   }
 
-  // Assigned roles
   assigned.forEach(roleId => {
     const it = state.items.find(x => x.ItemID === roleId);
     if (!it) return;
@@ -555,13 +618,11 @@ function renderRoles(){
     noteBox.value = check.note || "";
     noteBox.disabled = !interactive;
 
-    // save done + note
     cb.addEventListener("change", async () => {
       await saveRoleCheck(roleId, cb.checked, noteBox.value);
       state.roleChecks[roleId] = { done: cb.checked, note: noteBox.value };
     });
 
-    // debounce note saving
     noteBox.addEventListener("input", () => {
       if (!interactive) return;
       clearTimeout(noteTimers[roleId]);
@@ -586,9 +647,7 @@ function renderRoles(){
       btnRemove.textContent = "Remove";
       btnRemove.className = "ghost";
       btnRemove.style.padding = "8px 10px";
-      btnRemove.addEventListener("click", async () => {
-        await removeRoleStudent(roleId);
-      });
+      btnRemove.addEventListener("click", async () => removeRoleStudent(roleId));
       right.appendChild(btnRemove);
     }
 
@@ -599,13 +658,11 @@ function renderRoles(){
     list.appendChild(row);
   });
 
-  // Role picker
   const picker = qs("rolePicker");
   const availableWrap = qs("availableRoles");
   availableWrap.innerHTML = "";
 
   if (!interactive) {
-    // Preview tomorrow: show roles but disable Pick
     picker.classList.remove("hidden");
     const roles = filterRolesForStage(stage);
     roles.forEach(it => {
@@ -632,12 +689,10 @@ function renderRoles(){
 
       const right = document.createElement("div");
       right.className = "row";
-
       const btn = document.createElement("button");
       btn.textContent = "Pick (tomorrow)";
       btn.className = "ghost";
       btn.disabled = true;
-
       right.appendChild(btn);
 
       row.appendChild(left);
@@ -679,7 +734,6 @@ function renderRoles(){
 
     txt.appendChild(title);
     txt.appendChild(meta);
-
     left.appendChild(txt);
 
     const right = document.createElement("div");
@@ -689,21 +743,17 @@ function renderRoles(){
     btn.textContent = "Pick";
     btn.className = "primary";
     btn.style.padding = "8px 12px";
-    btn.addEventListener("click", async () => {
-      await tryClaimRoleStudent(it.ItemID);
-    });
-
+    btn.addEventListener("click", async () => tryClaimRoleStudent(it.ItemID));
     right.appendChild(btn);
 
     row.appendChild(left);
     row.appendChild(makeHelp(it.Tooltip));
     row.appendChild(right);
-
     availableWrap.appendChild(row);
   });
 }
 
-/* -------- Tasks (day-gated for students) -------- */
+/* ---------------- TASKS (unchanged) ---------------- */
 function allowedStatusOptions(){
   if (state.role === "admin") return ["NOT_STARTED","DOING","READY","OK","FIX"];
   return ["NOT_STARTED","DOING","READY"];
@@ -714,7 +764,6 @@ function renderTasks(){
   list.innerHTML = "";
 
   const stage = getStageForSelectedDay();
-  const day = getDayObj(state.selectedDayNo);
 
   if (stage === 0) {
     list.innerHTML = `<div class="note">No tiny-home tasks today.</div>`;
@@ -767,7 +816,6 @@ function renderTasks(){
     });
     sel.value = current;
 
-    // disable student interactions on preview day
     if (state.role === "student" && !studentInteractive) sel.disabled = true;
 
     sel.addEventListener("change", async () => {
@@ -825,46 +873,302 @@ function renderTasks(){
   qs("progressPill").textContent = `Progress: ${okCount}/${tasks.length} checked OK`;
 }
 
-/* -------- Admin: move group chooser ABOVE tasks + show role done+notes -------- */
-function placeAdminPanelOnTop(){
-  const panel = qs("adminPanel");
-  const tasksTitle = qs("tasksTitle");
-  if (!panel || !tasksTitle) return;
-  const headerRow = tasksTitle.closest(".row.wrap");
-  if (!headerRow || !headerRow.parentNode) return;
-  // move panel above header row
-  if (panel.parentNode === headerRow.parentNode) {
-    headerRow.parentNode.insertBefore(panel, headerRow);
-  }
+/* ======================= ADMIN REDESIGN ======================= */
+
+function setAdminTab(which){
+  const bO = qs("tabBtnOverview"), bA = qs("tabBtnAssign"), bM = qs("tabBtnManage");
+  const tO = qs("adminTabOverview"), tA = qs("adminTabAssign"), tM = qs("adminTabManage");
+
+  [bO,bA,bM].forEach(b => { if (b){ b.classList.remove("primary"); b.classList.add("ghost"); } });
+  [tO,tA,tM].forEach(t => { if (t) t.classList.add("hidden"); });
+
+  if (which === "overview"){ bO.classList.add("primary"); bO.classList.remove("ghost"); tO.classList.remove("hidden"); }
+  if (which === "assign"){ bA.classList.add("primary"); bA.classList.remove("ghost"); tA.classList.remove("hidden"); }
+  if (which === "manage"){ bM.classList.add("primary"); bM.classList.remove("ghost"); tM.classList.remove("hidden"); }
 }
 
 async function loadAdminGroup(){
   if (!state.adminGroupId) return;
+
   const res = await apiGet("getGroup", { groupId: state.adminGroupId, viewer:"admin", dayNo: state.selectedDayNo });
   if (!res.ok) { alert(res.error || "Could not load group"); return; }
 
   state.taskStatus = res.taskStatus || {};
   state.adminMembers = res.members || [];
-  state.adminDailyAssignmentsByStudent = res.dailyAssignmentsByStudent || {};
+
+  // supports v3 or fallback v2
+  state.adminAssignmentsByStudent = res.dailyAssignmentsByStudent || res.assignmentsByStudent || {};
   state.adminRoleChecksByStudent = res.roleChecksByStudent || {};
 
-  renderAdminRoleAssign();
-  renderTasks();
+  const day = getDayObj(state.selectedDayNo);
+  const stage = day ? day.Stage : "?";
+  const g = res.group || {};
+  qs("adminGroupMeta").textContent = `${g.Class || ""} • ${g.GroupName || g.GroupID} • Day ${state.selectedDayNo} • Stage ${stage}`;
 }
 
-function renderAdminRoleAssign(){
-  const wrap = qs("adminRoleAssign");
+function renderAdminWhoDoing(){
+  const wrap = qs("adminWhoDoing");
   if (!wrap) return;
   wrap.innerHTML = "";
 
-  const roles = filterAllRoles();
-  const roleById = Object.fromEntries(roles.map(r => [r.ItemID, r]));
+  const rolesById = Object.fromEntries(filterAllRoles().map(r => [r.ItemID, r]));
 
   state.adminMembers.forEach(m => {
     const sid = String(m.StudentID);
-    const assigned = state.adminDailyAssignmentsByStudent[sid] || [];
+    const roles = state.adminAssignmentsByStudent[sid] || [];
     const checks = state.adminRoleChecksByStudent[sid] || {};
-    const pts = sumRolePoints(assigned);
+    const doneCount = roles.filter(rid => checks[rid]?.done === true).length;
+
+    const card = document.createElement("div");
+    card.className = "item";
+    card.style.flexDirection = "column";
+    card.style.alignItems = "stretch";
+
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = `${englishName(m.Name)} — ${m.Name}`;
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = `Roles today: ${roles.length} • Done: ${doneCount}`;
+
+    card.appendChild(title);
+    card.appendChild(meta);
+
+    const list = document.createElement("div");
+    list.className = "list";
+    list.style.marginTop = "8px";
+
+    if (roles.length === 0) {
+      const n = document.createElement("div");
+      n.className = "note";
+      n.textContent = "No roles assigned.";
+      list.appendChild(n);
+    } else {
+      roles.forEach(rid => {
+        const r = rolesById[rid];
+        const chk = checks[rid] || { done:false, note:"" };
+
+        const row = document.createElement("div");
+        row.className = "item";
+
+        const left = document.createElement("div");
+        left.className = "left";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !!chk.done;
+        cb.disabled = true;
+
+        const txt = document.createElement("div");
+        txt.className = "txt";
+
+        const tt = document.createElement("div");
+        tt.className = "title";
+        tt.textContent = r ? r.Title : rid;
+
+        const mm = document.createElement("div");
+        mm.className = "meta";
+        mm.textContent = chk.done ? "Done ✅" : "Not done";
+
+        const note = document.createElement("div");
+        note.className = "note";
+        note.textContent = chk.note ? `Student note: ${chk.note}` : "Student note: (none)";
+
+        txt.appendChild(tt);
+        txt.appendChild(mm);
+        txt.appendChild(note);
+
+        left.appendChild(cb);
+        left.appendChild(txt);
+
+        row.appendChild(left);
+        row.appendChild(makeHelp(r ? r.Tooltip : ""));
+        list.appendChild(row);
+      });
+    }
+
+    card.appendChild(list);
+    wrap.appendChild(card);
+  });
+}
+
+function renderAdminAssignUI(){
+  const studentSel = qs("adminStudentSelect");
+  const roleSel = qs("adminRoleSelect");
+  const rolesList = qs("adminStudentRoles");
+  const btnAssign = qs("btnAdminAssignRole");
+  if (!studentSel || !roleSel || !rolesList || !btnAssign) return;
+
+  // students dropdown
+  studentSel.innerHTML = "";
+  state.adminMembers.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = String(m.StudentID);
+    opt.textContent = `${englishName(m.Name)} — ${m.Name}`;
+    studentSel.appendChild(opt);
+  });
+
+  // roles dropdown (stage aware)
+  const day = getDayObj(state.selectedDayNo);
+  const stage = day ? Number(day.Stage) : 1;
+  const candidates = filterRolesForStage(stage);
+
+  // disable taken single-owner roles
+  const roleById = Object.fromEntries(filterAllRoles().map(r => [r.ItemID, r]));
+  const takenSingles = new Set();
+  Object.values(state.adminAssignmentsByStudent).forEach(arr => {
+    (arr || []).forEach(rid => {
+      const r = roleById[rid];
+      if (r && String(r.SingleOwner).toUpperCase() === "TRUE") takenSingles.add(rid);
+    });
+  });
+
+  roleSel.innerHTML = "";
+  candidates.forEach(r => {
+    const opt = document.createElement("option");
+    opt.value = r.ItemID;
+    const so = String(r.SingleOwner).toUpperCase() === "TRUE" ? " (single)" : "";
+    opt.textContent = `${r.Title} • ${r.Points||0} pts${so}`;
+
+    if (takenSingles.has(r.ItemID) && String(r.SingleOwner).toUpperCase() === "TRUE") {
+      opt.disabled = true;
+      opt.textContent += " — taken";
+    }
+    roleSel.appendChild(opt);
+  });
+
+  const renderStudentRoles = () => {
+    rolesList.innerHTML = "";
+    const sid = studentSel.value;
+    const roles = state.adminAssignmentsByStudent[sid] || [];
+    const checks = state.adminRoleChecksByStudent[sid] || {};
+
+    if (!roles.length) {
+      rolesList.innerHTML = `<div class="note">No roles assigned.</div>`;
+      return;
+    }
+
+    roles.forEach(rid => {
+      const r = roleById[rid];
+      const chk = checks[rid] || { done:false, note:"" };
+
+      const row = document.createElement("div");
+      row.className = "item";
+
+      const left = document.createElement("div");
+      left.className = "left";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = !!chk.done;
+      cb.disabled = true;
+
+      const txt = document.createElement("div");
+      txt.className = "txt";
+
+      const tt = document.createElement("div");
+      tt.className = "title";
+      tt.textContent = r ? r.Title : rid;
+
+      const mm = document.createElement("div");
+      mm.className = "meta";
+      mm.textContent = chk.done ? "Done ✅" : "Not done";
+
+      const note = document.createElement("div");
+      note.className = "note";
+      note.textContent = chk.note ? `Student note: ${chk.note}` : "Student note: (none)";
+
+      txt.appendChild(tt);
+      txt.appendChild(mm);
+      txt.appendChild(note);
+
+      left.appendChild(cb);
+      left.appendChild(txt);
+
+      const right = document.createElement("div");
+      right.className = "row";
+
+      const btn = document.createElement("button");
+      btn.className = "ghost";
+      btn.textContent = "Remove";
+      btn.style.padding = "8px 10px";
+      btn.onclick = async () => {
+        const res = await apiPost({ action:"unclaimRole", studentId: sid, roleId: rid, dayNo: state.selectedDayNo, override:true });
+        if (!res.ok) { alert(res.error || "Could not remove"); return; }
+        await loadAdminGroup();
+        renderAdminWhoDoing();
+        renderAdminAssignUI();
+        await renderAdminClassOverview();
+      };
+
+      right.appendChild(btn);
+
+      row.appendChild(left);
+      row.appendChild(makeHelp(r ? r.Tooltip : ""));
+      row.appendChild(right);
+
+      rolesList.appendChild(row);
+    });
+  };
+
+  studentSel.onchange = renderStudentRoles;
+
+  btnAssign.onclick = async () => {
+    const sid = studentSel.value;
+    const rid = roleSel.value;
+    const res = await apiPost({ action:"claimRole", studentId: sid, roleId: rid, dayNo: state.selectedDayNo, override:true });
+    if (!res.ok) { alert(res.error || "Could not assign"); return; }
+    await loadAdminGroup();
+    renderAdminWhoDoing();
+    renderStudentRoles();
+    await renderAdminClassOverview();
+  };
+
+  renderStudentRoles();
+}
+
+async function renderAdminClassOverview(){
+  const wrap = qs("classOverview");
+  const label = qs("adminClassLabel");
+  if (!wrap || !label) return;
+
+  const selectedGroup = state.groups.find(g => String(g.GroupID) === String(state.adminGroupId));
+  const className = selectedGroup ? String(selectedGroup.Class || "") : "";
+  const day = getDayObj(state.selectedDayNo);
+  const stage = day ? Number(day.Stage) : 1;
+
+  label.textContent = className ? `${className} • Day ${state.selectedDayNo} • Stage ${stage}` : `Day ${state.selectedDayNo}`;
+
+  wrap.innerHTML = `<div class="note">Loading…</div>`;
+
+  const tasksForStage = filterTasksForStage(stage).map(t => t.ItemID);
+  const groupsInClass = state.groups.filter(g => String(g.Class || "") === className);
+
+  // fetch group snapshots
+  const results = await Promise.all(groupsInClass.map(g =>
+    apiGet("getGroup", { groupId: g.GroupID, viewer:"admin", dayNo: state.selectedDayNo })
+      .then(res => ({ g, res }))
+      .catch(() => ({ g, res: { ok:false } }))
+  ));
+
+  wrap.innerHTML = "";
+
+  results.forEach(({g, res}) => {
+    if (!res.ok) return;
+
+    const ts = res.taskStatus || {};
+    const members = res.members || [];
+    const assign = res.dailyAssignmentsByStudent || res.assignmentsByStudent || {};
+    const checks = res.roleChecksByStudent || {};
+
+    const counts = { NOT_STARTED:0, DOING:0, READY:0 };
+    tasksForStage.forEach(tid => {
+      const st = (ts[tid]?.status || "NOT_STARTED");
+      if (st === "DOING") counts.DOING++;
+      else if (st === "READY") counts.READY++;
+      else counts.NOT_STARTED++;
+    });
 
     const card = document.createElement("div");
     card.className = "item";
@@ -878,131 +1182,53 @@ function renderAdminRoleAssign(){
     const left = document.createElement("div");
     left.style.minWidth = "240px";
 
-    const name = document.createElement("div");
-    name.className = "title";
-    name.textContent = `${m.Name} (${m.Class})`;
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = g.GroupName || `Group ${g.GroupID}`;
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = `Roles today: ${assigned.length} • Points today: ${pts}`;
+    meta.textContent = `NS ${counts.NOT_STARTED} • DO ${counts.DOING} • RDY ${counts.READY}`;
 
-    left.appendChild(name);
+    left.appendChild(title);
     left.appendChild(meta);
 
     const right = document.createElement("div");
     right.className = "row wrap";
+    right.style.gap = "6px";
 
-    const sel = document.createElement("select");
-    sel.style.minWidth = "260px";
-    const o0 = document.createElement("option");
-    o0.value = "";
-    o0.textContent = "Assign a role…";
-    sel.appendChild(o0);
+    const bNS = document.createElement("span"); bNS.className="badge b0"; bNS.textContent = counts.NOT_STARTED;
+    const bDO = document.createElement("span"); bDO.className="badge b1"; bDO.textContent = counts.DOING;
+    const bRD = document.createElement("span"); bRD.className="badge b2"; bRD.textContent = counts.READY;
 
-    roles.forEach(r => {
-      if (assigned.includes(r.ItemID)) return;
-      const o = document.createElement("option");
-      o.value = r.ItemID;
-      const st = String(r.Stage)==="ALL" ? "ALL" : ("S"+r.Stage);
-      const so = String(r.SingleOwner).toUpperCase()==="TRUE" ? " (single)" : "";
-      o.textContent = `[${st}] ${r.Title} • ${r.Points||0} pts${so}`;
-      sel.appendChild(o);
-    });
-
-    const btnAssign = document.createElement("button");
-    btnAssign.className = "primary";
-    btnAssign.textContent = "Assign";
-    btnAssign.style.padding = "8px 12px";
-    btnAssign.addEventListener("click", async () => {
-      const rid = sel.value;
-      if (!rid) return;
-      const res = await apiPost({ action:"claimRole", studentId: sid, roleId: rid, dayNo: state.selectedDayNo, override:true });
-      if (!res.ok) { alert(res.error || "Could not assign"); return; }
-      await loadAdminGroup();
-    });
-
-    right.appendChild(sel);
-    right.appendChild(btnAssign);
+    right.appendChild(bNS); right.appendChild(bDO); right.appendChild(bRD);
 
     top.appendChild(left);
     top.appendChild(right);
+
     card.appendChild(top);
 
-    const roleList = document.createElement("div");
-    roleList.className = "list";
-    roleList.style.marginTop = "10px";
+    // student line: roles done ratio
+    const line = document.createElement("div");
+    line.className = "note";
+    line.style.marginTop = "8px";
 
-    if (assigned.length === 0) {
-      const n = document.createElement("div");
-      n.className = "note";
-      n.textContent = "No roles assigned for this day.";
-      roleList.appendChild(n);
-    } else {
-      assigned.forEach(rid => {
-        const r = roleById[rid];
-        const chk = checks[rid] || { done:false, note:"" };
+    const parts = members.map(m => {
+      const sid = String(m.StudentID);
+      const rids = assign[sid] || [];
+      const ck = checks[sid] || {};
+      const done = rids.filter(rid => ck[rid]?.done === true).length;
+      return `${englishName(m.Name)} ${done}/${rids.length}`;
+    });
 
-        const row = document.createElement("div");
-        row.className = "item";
+    line.textContent = "Roles done: " + (parts.length ? parts.join(" • ") : "(no students)");
+    card.appendChild(line);
 
-        const l = document.createElement("div");
-        l.className = "left";
-
-        const doneBox = document.createElement("input");
-        doneBox.type = "checkbox";
-        doneBox.checked = !!chk.done;
-        doneBox.disabled = true;
-
-        const t = document.createElement("div");
-        t.className = "txt";
-
-        const tt = document.createElement("div");
-        tt.className = "title";
-        tt.textContent = r ? r.Title : rid;
-
-        const mm = document.createElement("div");
-        mm.className = "meta";
-        mm.textContent = (chk.done ? "Done ✅" : "Not done") + (chk.note ? " • Note below" : "");
-
-        const note = document.createElement("div");
-        note.className = "note";
-        note.textContent = chk.note ? `Student note: ${chk.note}` : "Student note: (none)";
-
-        t.appendChild(tt);
-        t.appendChild(mm);
-        t.appendChild(note);
-
-        l.appendChild(doneBox);
-        l.appendChild(t);
-
-        const rr = document.createElement("div");
-        rr.className = "row";
-
-        const btnRemove = document.createElement("button");
-        btnRemove.className = "ghost";
-        btnRemove.textContent = "Remove";
-        btnRemove.style.padding = "8px 10px";
-        btnRemove.addEventListener("click", async () => {
-          const res = await apiPost({ action:"unclaimRole", studentId: sid, roleId: rid, dayNo: state.selectedDayNo, override:true });
-          if (!res.ok) { alert(res.error || "Could not remove"); return; }
-          await loadAdminGroup();
-        });
-
-        rr.appendChild(btnRemove);
-
-        row.appendChild(l);
-        row.appendChild(makeHelp(r ? r.Tooltip : ""));
-        row.appendChild(rr);
-        roleList.appendChild(row);
-      });
-    }
-
-    card.appendChild(roleList);
     wrap.appendChild(card);
   });
 }
 
-/* -------- Admin: Items manager (unchanged from your current setup) -------- */
+/* ---------------- MANAGE TASKS (kept minimal) ---------------- */
 function filteredItems(){
   const kindSel = qs("filterKind");
   const stageSel = qs("filterStage");
@@ -1023,10 +1249,7 @@ function renderItemsManager(){
   wrap.innerHTML = "";
 
   const items = filteredItems();
-  if (items.length === 0) {
-    wrap.innerHTML = `<div class="note">No items match this filter.</div>`;
-    return;
-  }
+  if (!items.length) { wrap.innerHTML = `<div class="note">No items match this filter.</div>`; return; }
 
   items.forEach(it => {
     const row = document.createElement("div");
@@ -1047,7 +1270,7 @@ function renderItemsManager(){
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = `ID: ${it.ItemID} • ${String(it.Kind).toUpperCase()} • Stage: ${it.Stage} • Points: ${it.Points||""} • Single: ${String(it.SingleOwner).toUpperCase()==="TRUE" ? "Yes" : "No"} • Order: ${it.Order}`;
+    meta.textContent = `ID: ${it.ItemID} • ${String(it.Kind).toUpperCase()} • Stage: ${it.Stage}`;
 
     left.appendChild(title);
     left.appendChild(meta);
@@ -1059,13 +1282,14 @@ function renderItemsManager(){
     btnDeactivate.className = "ghost";
     btnDeactivate.textContent = "Deactivate";
     btnDeactivate.style.padding = "8px 10px";
-    btnDeactivate.addEventListener("click", async () => {
+    btnDeactivate.onclick = async () => {
       const ok = confirm("Deactivate this item? It will disappear from the app.");
       if (!ok) return;
       const res = await apiPost({ action:"setItemActive", adminCode: state.adminCode, itemId: it.ItemID, active:false });
       if (!res.ok) { alert(res.error || "Could not deactivate"); return; }
       await refreshItems();
-    });
+      renderItemsManager();
+    };
 
     right.appendChild(btnDeactivate);
     top.appendChild(left);
@@ -1082,32 +1306,21 @@ async function refreshItems(){
   if (!res.ok) { alert(res.error || "Could not refresh"); return; }
   state.items = res.items || state.items;
   state.settings = res.settings || state.settings;
-
-  await loadAdminGroup();
-  renderItemsManager();
 }
 
 async function addItemFromForm(){
   const msg = qs("addItemMsg");
   if (msg) msg.textContent = "";
 
-  const kindEl = qs("newKind");
-  const stageEl = qs("newStage");
-  const titleEl = qs("newTitle");
-  const tipEl = qs("newTooltip");
-  const ptsEl = qs("newPoints");
-  const singleEl = qs("newSingle");
-  const orderEl = qs("newOrder");
-
-  const title = (titleEl ? titleEl.value : "").trim();
+  const title = (qs("newTitle")?.value || "").trim();
   if (!title) { if (msg) msg.textContent = "Title is required."; return; }
 
-  const kind = kindEl.value;
-  const stage = stageEl.value;
-  const tooltip = (tipEl ? tipEl.value : "").trim();
-  const points = (ptsEl ? ptsEl.value : "").trim();
-  const singleOwner = singleEl.value;
-  const order = Number((orderEl ? orderEl.value : "999") || 999);
+  const kind = qs("newKind").value;
+  const stage = qs("newStage").value;
+  const tooltip = (qs("newTooltip")?.value || "").trim();
+  const points = (qs("newPoints")?.value || "").trim();
+  const singleOwner = qs("newSingle").value;
+  const order = Number((qs("newOrder")?.value || "999") || 999);
 
   const safe = title.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g,"");
   const prefix = (kind === "ROLE") ? "R_CUSTOM_" : "T_CUSTOM_";
@@ -1116,28 +1329,23 @@ async function addItemFromForm(){
   const res = await apiPost({
     action:"addItem",
     adminCode: state.adminCode,
-    itemId,
-    kind,
-    stage,
-    title,
-    tooltip,
+    itemId, kind, stage, title, tooltip,
     points: (kind === "ROLE") ? points : "",
-    singleOwner,
-    order,
-    active:true,
+    singleOwner, order, active:true,
   });
 
   if (!res.ok) { if (msg) msg.textContent = res.error || "Could not add item"; return; }
 
-  titleEl.value = "";
-  tipEl.value = "";
-  ptsEl.value = "";
-  orderEl.value = "999";
+  if (qs("newTitle")) qs("newTitle").value = "";
+  if (qs("newTooltip")) qs("newTooltip").value = "";
+  if (qs("newPoints")) qs("newPoints").value = "";
+  if (qs("newOrder")) qs("newOrder").value = "999";
 
   await refreshItems();
+  renderItemsManager();
 }
 
-/* -------- Login + wiring -------- */
+/* ---------------- LOGIN ---------------- */
 async function login(){
   qs("loginError").textContent = "";
   const code = qs("loginCode").value.trim();
@@ -1152,15 +1360,12 @@ async function login(){
   state.settings = res.settings || state.settings;
   state.currentDayNo = Number(res.currentDayNo || 1);
 
-  // default selected day: today (and clamp student to today/tomorrow)
   const saved = Number(localStorage.getItem("tinyhome_dayNo") || state.currentDayNo);
   state.selectedDayNo = saved;
 
   if (state.role === "student") {
-    // clamp
     if (![state.currentDayNo, state.currentDayNo+1].includes(state.selectedDayNo)) state.selectedDayNo = state.currentDayNo;
   } else {
-    // clamp to existing day numbers
     const dayNos = state.calendar.map(d => Number(d.DayNo));
     if (!dayNos.includes(state.selectedDayNo)) state.selectedDayNo = state.currentDayNo;
   }
@@ -1168,6 +1373,9 @@ async function login(){
   qs("viewLogin").classList.add("hidden");
   qs("viewMain").classList.remove("hidden");
   qs("btnLogout").classList.remove("hidden");
+
+  buildDaySelect();
+  renderTodayNote();
 
   if (state.role === "student") {
     state.user = res.user;
@@ -1179,24 +1387,34 @@ async function login(){
     setSubtitle(`${state.user.name} • ${state.user.className} • Group ${state.user.groupId}`);
     qs("who").textContent = `Student: ${state.user.name} | Class: ${state.user.className} | Group: ${state.user.groupName || state.user.groupId}`;
 
-    qs("adminPanel").classList.add("hidden");
+    // left panels
+    qs("studentLeft")?.classList.remove("hidden");
+    qs("adminLeft")?.classList.add("hidden");
 
-    buildDaySelect();
-    renderTodayNote();
+    // admin panels
+    qs("adminTop")?.classList.add("hidden");
+    qs("adminPanel")?.classList.add("hidden");
+
     renderRoles();
     renderTasks();
     return;
   }
 
-  // admin
+  // ADMIN
   state.adminCode = code;
   state.groups = res.groups || [];
   setSubtitle("Teacher / Admin");
-  qs("who").textContent = "Admin mode: approve tasks, assign roles, and manage items.";
-  qs("adminPanel").classList.remove("hidden");
+  qs("who").textContent = "Admin: choose a group, check tasks, then use tabs for roles/manage.";
 
-  placeAdminPanelOnTop();
+  // left panels
+  qs("studentLeft")?.classList.add("hidden");
+  qs("adminLeft")?.classList.remove("hidden");
 
+  // admin panels
+  qs("adminTop")?.classList.remove("hidden");
+  qs("adminPanel")?.classList.remove("hidden");
+
+  // group select
   const gsel = qs("groupSelect");
   gsel.innerHTML = "";
   state.groups.forEach(g => {
@@ -1212,19 +1430,32 @@ async function login(){
   gsel.onchange = async () => {
     state.adminGroupId = gsel.value;
     await loadAdminGroup();
+    renderTasks();
+    renderAdminWhoDoing();
+    renderAdminAssignUI();
+    await renderAdminClassOverview();
   };
 
+  // tabs
+  qs("tabBtnOverview").onclick = () => setAdminTab("overview");
+  qs("tabBtnAssign").onclick = () => setAdminTab("assign");
+  qs("tabBtnManage").onclick = () => setAdminTab("manage");
+  setAdminTab("overview");
+
+  // manage tools wiring
   if (qs("btnAddItem")) qs("btnAddItem").onclick = addItemFromForm;
-  if (qs("btnRefreshItems")) qs("btnRefreshItems").onclick = refreshItems;
+  if (qs("btnRefreshItems")) qs("btnRefreshItems").onclick = async () => { await refreshItems(); renderItemsManager(); };
   if (qs("filterKind")) qs("filterKind").onchange = renderItemsManager;
   if (qs("filterStage")) qs("filterStage").onchange = renderItemsManager;
 
-  buildDaySelect();
-  renderTodayNote();
-
+  // initial load
   await loadAdminGroup();
+  renderTasks();              // tasks at the top, right after group selection
+  renderAdminWhoDoing();
+  renderAdminAssignUI();
+  await renderAdminClassOverview();
+  await refreshItems();
   renderItemsManager();
-  renderRoles();
 }
 
 function logout(){
@@ -1234,7 +1465,7 @@ function logout(){
     currentDayNo:1,selectedDayNo:1,
     assignments:[],roleChecks:{},taskStatus:{},summary:{earnedPoints:0,unfinishedCount:0},
     groups:[],adminGroupId:null,adminCode:null,
-    adminMembers:[],adminDailyAssignmentsByStudent:{},adminRoleChecksByStudent:{}
+    adminMembers:[],adminAssignmentsByStudent:{},adminRoleChecksByStudent:{}
   };
   qs("viewMain").classList.add("hidden");
   qs("viewLogin").classList.remove("hidden");
@@ -1246,7 +1477,6 @@ function logout(){
 qs("btnLogin").addEventListener("click", login);
 qs("btnLogout").addEventListener("click", logout);
 
-// close tooltip popups on background click
 document.addEventListener("click", () => {
   document.querySelectorAll(".help[data-open='1']").forEach(el => el.setAttribute("data-open","0"));
 });
