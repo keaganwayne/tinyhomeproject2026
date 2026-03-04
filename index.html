@@ -419,7 +419,31 @@ function englishName(full){
   if (m) return m[1].trim();
   return s.split(" ")[0].trim();
 }
+let taskPoll = null;
 
+async function loadStudentTaskStatus(dayNo){
+  if (state.role !== "student" || !state.user) return;
+
+  // Requires Apps Script getGroup to allow viewer="student" and return taskStatus
+  const res = await apiGet("getGroup", { groupId: state.user.groupId, viewer:"student", dayNo });
+  if (!res.ok) return;
+
+  state.taskStatus = res.taskStatus || {};
+}
+
+function startStudentTaskPolling(){
+  stopStudentTaskPolling();
+  taskPoll = setInterval(async () => {
+    if (state.role !== "student" || !state.user) return;
+    await loadStudentTaskStatus(state.selectedDayNo);
+    renderTasks();
+  }, 8000);
+}
+
+function stopStudentTaskPolling(){
+  if (taskPoll) clearInterval(taskPoll);
+  taskPoll = null;
+}
 /* ---------------- DAY SELECT ---------------- */
 function buildDaySelect(){
   const sel = qs("daySelect");
@@ -459,6 +483,7 @@ function buildDaySelect(){
 
     if (state.role === "student") {
       await loadStudentDay(state.selectedDayNo);
+      await loadStudentTaskStatus(state.selectedDayNo);
       renderRoles();
       renderTasks();
       return;
@@ -833,7 +858,7 @@ function renderTasks(){
       sel.appendChild(o);
     });
     sel.value = current;
-
+    
     // LOCKING RULES:
     // - Students cannot change if teacher marked OK or FIX
     // - Students also cannot edit on preview day
@@ -1515,6 +1540,8 @@ async function login(){
     state.assignments = res.assignments || [];
     state.roleChecks = res.roleChecks || {};
     state.taskStatus = res.taskStatus || {};
+    await loadStudentTaskStatus(state.selectedDayNo);  // pull latest teacher OK/FIX immediately
+    startStudentTaskPolling();                          // keep it live
     state.summary = res.summary || state.summary;
 
     setSubtitle(`${state.user.name} • ${state.user.className} • Group ${state.user.groupId}`);
@@ -1605,6 +1632,7 @@ function logout(){
   qs("btnLogout").classList.add("hidden");
   setSubtitle("Login to start");
   qs("loginCode").value = "";
+  stopStudentTaskPolling();
 }
 
 qs("btnLogin").addEventListener("click", login);
