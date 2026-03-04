@@ -126,20 +126,31 @@
     <!-- STUDENT LEFT -->
     <div id="studentLeft">
       <div class="row wrap" style="justify-content:space-between;gap:8px">
-        <div>
-          <div class="sectionTitle">Your responsibilities</div>
-          <div class="note">Pick roles if you have none yet. Tick “Done today” when you did your role.</div>
-        </div>
-        <div class="pill" id="pointsPill">Points: 0</div>
-      </div>
+  <div>
+    <div class="sectionTitle">Your responsibilities</div>
+    <div class="note">Pick roles if you have none yet. Tick “Done today” when you did your role.</div>
+  </div>
+  <div class="pill" id="pointsPill">Points: 0</div>
+</div>
+
+<div id="roleHint" class="note" style="margin-top:8px">
+  Tip: At the end of the lesson, write what you did, then tick “Done today”.
+</div>
 
       <div id="rolesList" class="list" style="margin-top:10px"></div>
 
       <div id="rolePicker" class="hidden" style="margin-top:10px">
-        <div class="divider"></div>
-        <div class="sectionTitle">Pick a role</div>
-        <div id="availableRoles" class="list"></div>
-      </div>
+  <div class="divider"></div>
+  <div class="sectionTitle">Pick a role</div>
+  <div id="availableRoles" class="list"></div>
+</div>
+
+<div id="historyPanel" style="margin-top:14px">
+  <div class="divider"></div>
+  <div class="sectionTitle">Previous days</div>
+  <div id="historyMeta" class="note"></div>
+  <div id="historyList" class="list" style="margin-top:10px"></div>
+</div>
     </div>
 
     <!-- ADMIN LEFT -->
@@ -313,6 +324,8 @@ let state = {
   user: null,
   items: [],
   calendar: [],
+  history: [],
+  totalEarnedPoints: 0,
   settings: { MIN_ROLE_POINTS:8, MAX_ROLE_POINTS:12, MAX_ROLES_PER_STUDENT:4, CLAIM_WINDOW_SECONDS:60, CLAIM_MAX_IN_WINDOW:3 },
   currentDayNo: 1,
   selectedDayNo: 1,
@@ -483,10 +496,11 @@ function buildDaySelect(){
 
     if (state.role === "student") {
       await loadStudentDay(state.selectedDayNo);
-      await loadStudentTaskStatus(state.selectedDayNo);
-      renderRoles();
-      renderTasks();
-      return;
+await loadStudentTaskStatus(state.selectedDayNo);
+renderRoles();
+renderTasks();
+renderHistory();
+return;
     }
 
     // admin
@@ -517,6 +531,8 @@ async function loadStudentDay(dayNo){
   state.assignments = res.assignments || [];
   state.roleChecks = res.roleChecks || {};
   state.summary = res.summary || state.summary;
+  state.history = res.history || [];
+  state.totalEarnedPoints = Number(res.totalEarnedPoints || 0);
 }
 
 function updatePointsPill(){
@@ -644,9 +660,19 @@ function renderRoles(){
     noteBox.disabled = !interactive;
 
     cb.addEventListener("change", async () => {
-      await saveRoleCheck(roleId, cb.checked, noteBox.value);
-      state.roleChecks[roleId] = { done: cb.checked, note: noteBox.value };
-    });
+  if (cb.checked) {
+    const text = (noteBox.value || "").trim();
+    if (!text) {
+      cb.checked = false;
+      alert("Write one short sentence about what you did today, then tick “Done today”.");
+      noteBox.focus();
+      return;
+    }
+  }
+
+  await saveRoleCheck(roleId, cb.checked, noteBox.value);
+  state.roleChecks[roleId] = { done: cb.checked, note: noteBox.value };
+});
 
     noteBox.addEventListener("input", () => {
       if (!interactive) return;
@@ -775,6 +801,56 @@ function renderRoles(){
     row.appendChild(makeHelp(it.Tooltip));
     row.appendChild(right);
     availableWrap.appendChild(row);
+  });
+}
+function renderHistory(){
+  const meta = qs("historyMeta");
+  const list = qs("historyList");
+  if (!meta || !list) return;
+
+  meta.textContent = `Total project points earned so far: ${state.totalEarnedPoints}`;
+  list.innerHTML = "";
+
+  const items = (state.history || []).slice().sort((a,b) => Number(b.dayNo) - Number(a.dayNo));
+
+  if (!items.length) {
+    list.innerHTML = `<div class="note">No history yet.</div>`;
+    return;
+  }
+
+  items.forEach(h => {
+    const row = document.createElement("div");
+    row.className = "item";
+
+    const left = document.createElement("div");
+    left.className = "left";
+
+    const txt = document.createElement("div");
+    txt.className = "txt";
+
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = `Day ${h.dayNo}: ${h.title}`;
+
+    const meta2 = document.createElement("div");
+    meta2.className = "meta";
+    meta2.textContent = `${h.points || 0} pts • ${h.done ? "Done ✅" : "Not checked"}`;
+
+    txt.appendChild(title);
+    txt.appendChild(meta2);
+
+    // message if they forgot to check
+    if (!h.done) {
+      const warn = document.createElement("div");
+      warn.className = "note";
+      warn.textContent = "You didn’t tick the box that day. Next time, write what you did so Mr. Appel can see it.";
+      txt.appendChild(warn);
+    }
+
+    left.appendChild(txt);
+
+    row.appendChild(left);
+    list.appendChild(row);
   });
 }
 
@@ -1512,22 +1588,27 @@ async function login(){
   const res = await apiGet("login", { code });
   if (!res.ok) { qs("loginError").textContent = res.error || "Login failed"; return; }
 
+  // common state
   state.role = res.role;
   state.items = res.items || [];
   state.calendar = res.calendar || [];
   state.settings = res.settings || state.settings;
   state.currentDayNo = Number(res.currentDayNo || 1);
 
+  // restore selected day (with guards)
   const saved = Number(localStorage.getItem("tinyhome_dayNo") || state.currentDayNo);
   state.selectedDayNo = saved;
 
   if (state.role === "student") {
-    if (![state.currentDayNo, state.currentDayNo+1].includes(state.selectedDayNo)) state.selectedDayNo = state.currentDayNo;
+    if (![state.currentDayNo, state.currentDayNo + 1].includes(state.selectedDayNo)) {
+      state.selectedDayNo = state.currentDayNo;
+    }
   } else {
     const dayNos = state.calendar.map(d => Number(d.DayNo));
     if (!dayNos.includes(state.selectedDayNo)) state.selectedDayNo = state.currentDayNo;
   }
 
+  // show main UI
   qs("viewLogin").classList.add("hidden");
   qs("viewMain").classList.remove("hidden");
   qs("btnLogout").classList.remove("hidden");
@@ -1535,17 +1616,24 @@ async function login(){
   buildDaySelect();
   renderTodayNote();
 
+  /* ================= STUDENT ================= */
   if (state.role === "student") {
+    // IMPORTANT: set user first (loadStudentDay needs it)
     state.user = res.user;
-    state.assignments = res.assignments || [];
-    state.roleChecks = res.roleChecks || {};
+
+    // optional seed (will be overwritten by loadStudentTaskStatus anyway)
     state.taskStatus = res.taskStatus || {};
-    await loadStudentTaskStatus(state.selectedDayNo);  // pull latest teacher OK/FIX immediately
-    startStudentTaskPolling();                          // keep it live
-    state.summary = res.summary || state.summary;
+
+    // Load the day the dropdown is actually showing (today OR tomorrow)
+    await loadStudentDay(state.selectedDayNo);
+
+    // Pull latest teacher OK/FIX for group tasks + start live polling
+    await loadStudentTaskStatus(state.selectedDayNo);
+    startStudentTaskPolling();
 
     setSubtitle(`${state.user.name} • ${state.user.className} • Group ${state.user.groupId}`);
-    qs("who").textContent = `Student: ${state.user.name} | Class: ${state.user.className} | Group: ${state.user.groupName || state.user.groupId}`;
+    qs("who").textContent =
+      `Student: ${state.user.name} | Class: ${state.user.className} | Group: ${state.user.groupName || state.user.groupId}`;
 
     // left panels
     qs("studentLeft")?.classList.remove("hidden");
@@ -1554,13 +1642,17 @@ async function login(){
     // admin panels
     qs("adminTop")?.classList.add("hidden");
     qs("adminPanel")?.classList.add("hidden");
+
+    // offer carry-over only on TODAY (your function already checks this)
     await maybeOfferRoleCarryOver();
+
     renderRoles();
     renderTasks();
+    renderHistory();
     return;
   }
 
-  // ADMIN
+  /* ================= ADMIN ================= */
   state.adminCode = code;
   state.groups = res.groups || [];
   setSubtitle("Teacher / Admin");
@@ -1610,37 +1702,13 @@ async function login(){
 
   // initial load
   await loadAdminGroup();
-  renderTasks();              // tasks at the top, right after group selection
+  renderTasks();
   renderAdminWhoDoing();
   renderAdminAssignUI();
   await renderAdminClassOverview();
   await refreshItems();
   renderItemsManager();
 }
-
-function logout(){
-  state = {
-    role:null,user:null,items:[],calendar:[],
-    settings: state.settings,
-    currentDayNo:1,selectedDayNo:1,
-    assignments:[],roleChecks:{},taskStatus:{},summary:{earnedPoints:0,unfinishedCount:0},
-    groups:[],adminGroupId:null,adminCode:null,
-    adminMembers:[],adminAssignmentsByStudent:{},adminRoleChecksByStudent:{}
-  };
-  qs("viewMain").classList.add("hidden");
-  qs("viewLogin").classList.remove("hidden");
-  qs("btnLogout").classList.add("hidden");
-  setSubtitle("Login to start");
-  qs("loginCode").value = "";
-  stopStudentTaskPolling();
-}
-
-qs("btnLogin").addEventListener("click", login);
-qs("btnLogout").addEventListener("click", logout);
-
-document.addEventListener("click", () => {
-  document.querySelectorAll(".help[data-open='1']").forEach(el => el.setAttribute("data-open","0"));
-});
 </script>
 </div> <!-- end .wrap -->
 </body>
