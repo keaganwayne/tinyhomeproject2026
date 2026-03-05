@@ -19,7 +19,7 @@
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:"DM Sans",system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
-  .wrap{max-width:1100px;margin:0 auto;padding:18px}
+  .wrap:not(.row){max-width:1100px;margin:0 auto;padding:18px}
   .topbar{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px}
   .brand{display:flex;gap:10px;align-items:center}
   .logo{width:34px;height:34px;border-radius:10px;background:var(--accent);display:inline-block}
@@ -36,6 +36,7 @@
   button{cursor:pointer}
   button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
   button.ghost{background:transparent}
+  button:disabled{opacity:.6;cursor:not-allowed}
   .row{display:flex;gap:10px;align-items:center}
   .row.wrap{flex-wrap:wrap}
   .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:var(--muted);background:#fff}
@@ -79,6 +80,7 @@
   textarea{width:100%;min-height:68px;resize:vertical}
 </style>
 </head>
+
 <body>
 <div class="wrap">
   <div class="topbar">
@@ -108,287 +110,313 @@
   </div>
 
   <!-- MAIN -->
-<div id="viewMain" class="grid hidden">
+  <div id="viewMain" class="grid hidden">
 
-  <!-- LEFT (Card) -->
-  <div class="card">
-    <div class="sectionTitle">Today</div>
-    <div id="who" class="note"></div>
+    <!-- LEFT (Card) -->
+    <div class="card">
+      <div class="sectionTitle">Today</div>
+      <div id="who" class="note"></div>
 
-    <div class="divider"></div>
-
-    <label for="daySelect">Project Day</label>
-    <select id="daySelect" style="width:100%;margin-top:6px"></select>
-    <div id="dayNote" class="note" style="margin-top:8px"></div>
-
-    <div class="divider"></div>
-
-    <!-- STUDENT LEFT -->
-    <div id="studentLeft">
-      <div class="row wrap" style="justify-content:space-between;gap:8px">
-  <div>
-    <div class="sectionTitle">Your responsibilities</div>
-    <div class="note">Pick roles if you have none yet. Tick “Done today” when you did your role.</div>
-  </div>
-  <div class="pill" id="pointsPill">Points: 0</div>
-</div>
-
-<div id="roleHint" class="note" style="margin-top:8px">
-  Tip: At the end of the lesson, write what you did, then tick “Done today”.
-</div>
-
-      <div id="rolesList" class="list" style="margin-top:10px"></div>
-
-      <div id="rolePicker" class="hidden" style="margin-top:10px">
-  <div class="divider"></div>
-  <div class="sectionTitle">Pick a role</div>
-  <div id="availableRoles" class="list"></div>
-</div>
-
-<div id="historyPanel" style="margin-top:14px">
-  <div class="divider"></div>
-  <div class="sectionTitle">Previous days</div>
-  <div id="historyMeta" class="note"></div>
-  <div id="historyList" class="list" style="margin-top:10px"></div>
-</div>
-    </div>
-
-    <!-- ADMIN LEFT -->
-    <div id="adminLeft" class="hidden">
-      <div class="sectionTitle">Class overview</div>
-      <div id="adminClassLabel" class="note"></div>
-
-      <div class="row wrap" style="gap:8px;margin-top:8px">
-        <span class="badge b0">NS</span>
-        <span class="badge b1">DO</span>
-        <span class="badge b2">RDY</span>
-      </div>
-
-      <div id="classOverview" class="list" style="margin-top:10px"></div>
-    </div>
-  </div>
-
-  <!-- RIGHT (Card) -->
-  <div class="card">
-
-    <!-- ADMIN TOP (group selector always above tasks) -->
-    <div id="adminTop" class="hidden">
-      <div class="sectionTitle">Admin: choose a group</div>
-      <select id="groupSelect" style="width:100%;margin-top:6px"></select>
-      <div id="adminGroupMeta" class="note" style="margin-top:8px"></div>
-      <div class="divider"></div>
-    </div>
-
-    <!-- TASKS -->
-    <div class="row wrap" style="justify-content:space-between;gap:8px">
-      <div>
-        <div class="sectionTitle" id="tasksTitle">Group tasks</div>
-        <div class="note">Students: use Not started / Doing / Ready for teacher. Teacher: can set OK ✅ or Fix ⚠️.</div>
-      </div>
-      <div class="row wrap">
-        <span class="pill" id="progressPill">Progress</span>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-    <div id="tasksList" class="list"></div>
-
-    <!-- ADMIN TABS -->
-    <div id="adminPanel" class="hidden" style="margin-top:14px">
       <div class="divider"></div>
 
-      <div class="row wrap" style="gap:8px;margin-top:10px">
-        <button id="tabBtnOverview" class="primary">Who’s doing what</button>
-        <button id="tabBtnAssign" class="ghost">Assign roles</button>
-        <button id="tabBtnManage" class="ghost">Manage tasks (optional)</button>
-      </div>
+      <label for="daySelect">Project Day</label>
+      <select id="daySelect" style="width:100%;margin-top:6px"></select>
+      <div id="dayNote" class="note" style="margin-top:8px"></div>
 
-      <div id="adminTabOverview" style="margin-top:10px">
-        <div id="adminWhoDoing" class="list"></div>
-      </div>
+      <div class="divider"></div>
 
-      <div id="adminTabAssign" class="hidden" style="margin-top:10px">
-        <div class="card" style="padding:12px;border-radius:14px">
-          <label>Student</label>
-          <select id="adminStudentSelect" style="width:100%;margin-top:6px"></select>
-
-          <div class="divider"></div>
-
-          <label>Role</label>
-          <select id="adminRoleSelect" style="width:100%;margin-top:6px"></select>
-
-          <div class="row wrap" style="gap:10px;margin-top:10px;justify-content:flex-end">
-            <button id="btnAdminAssignRole" class="primary">Assign</button>
+      <!-- STUDENT LEFT -->
+      <div id="studentLeft">
+        <div class="row wrap" style="justify-content:space-between;gap:8px">
+          <div>
+            <div class="sectionTitle">Your responsibilities</div>
+            <div class="note">Pick roles if you have none yet. Tick “Done today” when you did your role.</div>
           </div>
+          <div class="pill" id="pointsPill">Points: 0</div>
+        </div>
 
+        <div id="roleHint" class="note" style="margin-top:8px">
+          Tip: At the end of the lesson, write what you did, then tick “Done today”.
+        </div>
+
+        <div id="rolesList" class="list" style="margin-top:10px"></div>
+
+        <div id="rolePicker" class="hidden" style="margin-top:10px">
           <div class="divider"></div>
-          <div class="sectionTitle">This student’s roles (today)</div>
-          <div id="adminStudentRoles" class="list"></div>
+          <div class="sectionTitle">Pick a role</div>
+          <div id="availableRoles" class="list"></div>
+        </div>
+
+        <div id="historyPanel" style="margin-top:14px">
+          <div class="divider"></div>
+          <div class="sectionTitle">Previous days</div>
+          <div id="historyMeta" class="note"></div>
+          <div id="historyList" class="list" style="margin-top:10px"></div>
         </div>
       </div>
 
-      <div id="adminTabManage" class="hidden" style="margin-top:10px">
-        <details>
-          <summary class="note" style="cursor:pointer">Open manage tasks & roles</summary>
+      <!-- ADMIN LEFT -->
+      <div id="adminLeft" class="hidden">
+        <div class="sectionTitle">Class overview</div>
+        <div id="adminClassLabel" class="note"></div>
 
-          <div class="card" style="margin-top:10px;padding:12px;border-radius:14px">
-            <div class="row wrap" style="gap:10px">
-              <div style="flex:1;min-width:140px">
-                <label>Kind</label>
-                <select id="newKind" style="width:100%;margin-top:6px">
-                  <option value="TASK">TASK</option>
-                  <option value="ROLE">ROLE</option>
-                </select>
-              </div>
-              <div style="flex:1;min-width:140px">
-                <label>Stage</label>
-                <select id="newStage" style="width:100%;margin-top:6px">
-                  <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
-                  <option value="ALL">ALL</option>
-                </select>
-              </div>
-              <div style="flex:2;min-width:220px">
-                <label>Title (simple)</label>
-                <input id="newTitle" style="width:100%;margin-top:6px" placeholder="Example: Cut walls straight" />
-              </div>
-            </div>
+        <div class="row wrap" style="gap:8px;margin-top:8px">
+          <span class="badge b0">NS</span>
+          <span class="badge b1">DO</span>
+          <span class="badge b2">RDY</span>
+        </div>
 
-            <div class="row wrap" style="gap:10px;margin-top:10px">
-              <div style="flex:2;min-width:220px">
-                <label>Tooltip (details + examples)</label>
-                <input id="newTooltip" style="width:100%;margin-top:6px" placeholder="Example: Use metal ruler. Slow cuts." />
-              </div>
-              <div style="flex:1;min-width:140px">
-                <label>Points (roles only)</label>
-                <input id="newPoints" style="width:100%;margin-top:6px" placeholder="2" />
-              </div>
-              <div style="flex:1;min-width:140px">
-                <label>Single owner?</label>
-                <select id="newSingle" style="width:100%;margin-top:6px">
-                  <option value="FALSE">No</option>
-                  <option value="TRUE">Yes</option>
-                </select>
-              </div>
-              <div style="flex:1;min-width:140px">
-                <label>Order</label>
-                <input id="newOrder" style="width:100%;margin-top:6px" placeholder="999" />
-              </div>
-            </div>
+        <div id="classOverview" class="list" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT (Card) -->
+    <div class="card">
+
+      <!-- ADMIN TOP (group selector always above tasks) -->
+      <div id="adminTop" class="hidden">
+        <div class="sectionTitle">Admin: choose a group</div>
+        <select id="groupSelect" style="width:100%;margin-top:6px"></select>
+        <div class="divider"></div>
+        <div class="sectionTitle">Official class day</div>
+        <div class="row wrap" style="gap:10px;align-items:center">
+          <select id="officialDaySelect" style="flex:1;min-width:220px"></select>
+          <button id="btnSetOfficialDay" class="primary">Set day</button>
+        </div>
+      <div id="officialDayMsg" class="note" style="margin-top:8px"></div>
+        <div id="adminGroupMeta" class="note" style="margin-top:8px"></div>
+        <div class="divider"></div>
+      </div>
+
+      <!-- TASKS -->
+      <div class="row wrap" style="justify-content:space-between;gap:8px">
+        <div>
+          <div class="sectionTitle" id="tasksTitle">Group tasks</div>
+          <div class="note">Students: use Not started / Doing / Ready for teacher. Teacher: can set OK ✅ or Fix ⚠️.</div>
+        </div>
+        <div class="row wrap">
+          <span class="pill" id="progressPill">Progress</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div id="tasksList" class="list"></div>
+
+      <!-- ADMIN TABS -->
+      <div id="adminPanel" class="hidden" style="margin-top:14px">
+        <div class="divider"></div>
+
+        <div class="row wrap" style="gap:8px;margin-top:10px">
+          <button id="tabBtnOverview" class="primary">Who’s doing what</button>
+          <button id="tabBtnAssign" class="ghost">Assign roles</button>
+          <button id="tabBtnManage" class="ghost">Manage tasks (optional)</button>
+        </div>
+
+        <div id="adminTabOverview" style="margin-top:10px">
+          <div id="adminWhoDoing" class="list"></div>
+        </div>
+
+        <div id="adminTabAssign" class="hidden" style="margin-top:10px">
+          <div class="card" style="padding:12px;border-radius:14px">
+            <label>Student</label>
+            <select id="adminStudentSelect" style="width:100%;margin-top:6px"></select>
+
+            <div class="divider"></div>
+
+            <label>Role</label>
+            <select id="adminRoleSelect" style="width:100%;margin-top:6px"></select>
 
             <div class="row wrap" style="gap:10px;margin-top:10px;justify-content:flex-end">
-              <button id="btnAddItem" class="primary">Add item</button>
-              <button id="btnRefreshItems" class="ghost">Refresh</button>
+              <button id="btnAdminAssignRole" class="primary">Assign</button>
             </div>
-            <div id="addItemMsg" class="note" style="margin-top:8px;color:var(--bad)"></div>
 
-            <details style="margin-top:10px">
-              <summary class="note" style="cursor:pointer">Open filters</summary>
-              <div class="row wrap" style="gap:10px;margin-top:6px">
-                <select id="filterKind">
-                  <option value="ALL">All kinds</option>
-                  <option value="TASK">TASK</option>
-                  <option value="ROLE">ROLE</option>
-                </select>
-                <select id="filterStage">
-                  <option value="ALL">All stages</option>
-                  <option value="1">Stage 1</option><option value="2">Stage 2</option><option value="3">Stage 3</option><option value="4">Stage 4</option>
-                  <option value="ALL_STAGE">Stage=ALL</option>
-                </select>
-              </div>
-            </details>
-
-            <details style="margin-top:10px">
-              <summary class="note" style="cursor:pointer">Show items list</summary>
-              <div id="itemsManager" class="list" style="margin-top:10px"></div>
-            </details>
+            <div class="divider"></div>
+            <div class="sectionTitle">This student’s roles (today)</div>
+            <div id="adminStudentRoles" class="list"></div>
           </div>
-        </details>
+        </div>
+
+        <div id="adminTabManage" class="hidden" style="margin-top:10px">
+          <details>
+            <summary class="note" style="cursor:pointer">Open manage tasks & roles</summary>
+
+            <div class="card" style="margin-top:10px;padding:12px;border-radius:14px">
+              <div class="row wrap" style="gap:10px">
+                <div style="flex:1;min-width:140px">
+                  <label>Kind</label>
+                  <select id="newKind" style="width:100%;margin-top:6px">
+                    <option value="TASK">TASK</option>
+                    <option value="ROLE">ROLE</option>
+                  </select>
+                </div>
+                <div style="flex:1;min-width:140px">
+                  <label>Stage</label>
+                  <select id="newStage" style="width:100%;margin-top:6px">
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                    <option value="ALL">ALL</option>
+                  </select>
+                </div>
+                <div style="flex:2;min-width:220px">
+                  <label>Title (simple)</label>
+                  <input id="newTitle" style="width:100%;margin-top:6px" placeholder="Example: Cut walls straight" />
+                </div>
+              </div>
+
+              <div class="row wrap" style="gap:10px;margin-top:10px">
+                <div style="flex:2;min-width:220px">
+                  <label>Tooltip (details + examples)</label>
+                  <input id="newTooltip" style="width:100%;margin-top:6px" placeholder="Example: Use metal ruler. Slow cuts." />
+                </div>
+                <div style="flex:1;min-width:140px">
+                  <label>Points (roles only)</label>
+                  <input id="newPoints" style="width:100%;margin-top:6px" placeholder="2" />
+                </div>
+                <div style="flex:1;min-width:140px">
+                  <label>Single owner?</label>
+                  <select id="newSingle" style="width:100%;margin-top:6px">
+                    <option value="FALSE">No</option>
+                    <option value="TRUE">Yes</option>
+                  </select>
+                </div>
+                <div style="flex:1;min-width:140px">
+                  <label>Order</label>
+                  <input id="newOrder" style="width:100%;margin-top:6px" placeholder="999" />
+                </div>
+              </div>
+
+              <div class="row wrap" style="gap:10px;margin-top:10px;justify-content:flex-end">
+                <button id="btnAddItem" class="primary">Add item</button>
+                <button id="btnRefreshItems" class="ghost">Refresh</button>
+              </div>
+              <div id="addItemMsg" class="note" style="margin-top:8px;color:var(--bad)"></div>
+
+              <details style="margin-top:10px">
+                <summary class="note" style="cursor:pointer">Open filters</summary>
+                <div class="row wrap" style="gap:10px;margin-top:6px">
+                  <select id="filterKind">
+                    <option value="ALL">All kinds</option>
+                    <option value="TASK">TASK</option>
+                    <option value="ROLE">ROLE</option>
+                  </select>
+                  <select id="filterStage">
+                    <option value="ALL">All stages</option>
+                    <option value="1">Stage 1</option><option value="2">Stage 2</option><option value="3">Stage 3</option><option value="4">Stage 4</option>
+                    <option value="ALL_STAGE">Stage=ALL</option>
+                  </select>
+                </div>
+              </details>
+
+              <details style="margin-top:10px">
+                <summary class="note" style="cursor:pointer">Show items list</summary>
+                <div id="itemsManager" class="list" style="margin-top:10px"></div>
+              </details>
+            </div>
+          </details>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfFy15F0G7b0kLD32VlbBfeGLZ_gRCqf1xV5BXpnrMAg7Y0iX96x8U6tZc4U2-ewL9tg/exec";
+const supabaseUrl = "https://trtwmxdtedqltjvzqdvu.supabase.co";
+const supabaseKey = "sb_publishable_lx05g_WplECsjYdAKQRsTw_nAnx0_IP";
 
+// IMPORTANT: don't name this "supabase"
+const sb = supabase.createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
+  global: {
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+    },
+  },
+});
+
+/* ======================= CONSTANTS / STATE ======================= */
 const STATUS = {
   NOT_STARTED: {label:"Not started", badge:"b0"},
-  DOING: {label:"Doing now", badge:"b1"},
-  READY: {label:"Ready for teacher", badge:"b2"},
-  OK: {label:"Checked OK ✅", badge:"b3"},
-  FIX: {label:"Fix this ⚠️", badge:"b4"},
+  DOING:       {label:"Doing now", badge:"b1"},
+  READY:       {label:"Ready for teacher", badge:"b2"},
+  OK:          {label:"Checked OK ✅", badge:"b3"},
+  FIX:         {label:"Fix this ⚠️", badge:"b4"},
 };
 
+const DEFAULT_SETTINGS = {
+  MIN_ROLE_POINTS: 8,
+  MAX_ROLE_POINTS: 12,
+  MAX_ROLES_PER_STUDENT: 4,
+  CLAIM_WINDOW_SECONDS: 60,
+  CLAIM_MAX_IN_WINDOW: 3,
+  CURRENT_DAYNO: 1,
+};
+
+function stageTag(v){
+  return String(v ?? "").trim().toUpperCase();  // "1", "ALL"
+}
+function stageNum(v){
+  const t = stageTag(v);
+  return /^[0-9]+$/.test(t) ? Number(t) : null; // 1..4 or null
+}
+function appliesToStage(itemStage, currentStage){
+  const t = stageTag(itemStage);
+  if (t === "ALL") return true;
+  const n = stageNum(t);
+  return n === Number(currentStage);
+}
+
 let state = {
-  role: null,
-  user: null,
-  items: [],
+  role: null,                 // "student" | "admin"
+  user: null,                 // student row
+  group: null,                // groups row (for student, selected group for admin)
+  groupMemberIds: [],         // cached IDs for student's group (for single-owner checks)
+
+  items: [],                  // active items
+  itemsAll: [],               // all items (admin manage)
   calendar: [],
-  history: [],
-  totalEarnedPoints: 0,
-  settings: { MIN_ROLE_POINTS:8, MAX_ROLE_POINTS:12, MAX_ROLES_PER_STUDENT:4, CLAIM_WINDOW_SECONDS:60, CLAIM_MAX_IN_WINDOW:3 },
+  settings: {...DEFAULT_SETTINGS},
+
   currentDayNo: 1,
   selectedDayNo: 1,
 
-  assignments: [],             // roles for selected day
-  roleChecks: {},              // roleId -> {done,note}
-  taskStatus: {},
-
+  // student day data
+  assignments: [],            // array of RoleID strings for selected day
+  roleChecks: {},             // { RoleID: {done, note} }
+  history: [],                // aggregated history objects
+  totalEarnedPoints: 0,
   summary: { earnedPoints:0, unfinishedCount:0 },
 
+  // group tasks status (object map)
+  taskStatus: {},             // { TaskID: {status, note} }
+
+  // admin
   groups: [],
   adminGroupId: null,
   adminCode: null,
-
   adminMembers: [],
-  adminAssignmentsByStudent: {},  // {studentId:[roleId...]}
-  adminRoleChecksByStudent: {},   // {studentId:{roleId:{done,note}}}
+  adminAssignmentsByStudent: {},     // { StudentID: [RoleID...] }
+  adminRoleChecksByStudent: {},      // { StudentID: { RoleID: {done,note} } }
 };
 
 function qs(id){ return document.getElementById(id); }
+function setSubtitle(text){ qs("subtitle").textContent = text; }
 
-async function apiGet(action, params = {}) {
-  try{
-    const url = new URL(SCRIPT_URL);
-    url.searchParams.set("action", action);
-    for (const [k,v] of Object.entries(params)) url.searchParams.set(k, v);
-
-    const r = await fetch(url.toString());
-    const text = await r.text();
-    try {
-      return JSON.parse(text);
-    } catch {
-      return { ok:false, error:`Non-JSON response (${r.status}). Web app not public / wrong deployment.`, raw:text.slice(0,180) };
-    }
-  } catch (err){
-    return { ok:false, error:`Network error: ${String(err)}` };
-  }
-}
-
-async function apiPost(payload) {
-  try{
-    const r = await fetch(SCRIPT_URL, {
-      method: "POST",
-      // keep as text/plain to avoid CORS preflight
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
-    });
-    const text = await r.text();
-    try {
-      return JSON.parse(text);
-    } catch {
-      return { ok:false, error:`Non-JSON response (${r.status}). Web app not public / wrong deployment.`, raw:text.slice(0,180) };
-    }
-  } catch (err){
-    return { ok:false, error:`Network error: ${String(err)}` };
-  }
+function englishName(full){
+  const s = String(full || "");
+  const m = s.match(/\(([^)]+)\)/);
+  if (m) return m[1].trim();
+  return s.split(" ")[0].trim();
 }
 
 function stageName(stage){
   if (Number(stage) === 0) return "No project day";
   return "Stage " + stage;
 }
-function setSubtitle(text){ qs("subtitle").textContent = text; }
 
 function isRole(item){ return String(item.Kind).toUpperCase() === "ROLE"; }
 function isTask(item){ return String(item.Kind).toUpperCase() === "TASK"; }
@@ -407,24 +435,7 @@ function previewStudentDay(){
   return state.role === "student" && state.selectedDayNo === (state.currentDayNo + 1);
 }
 
-function filterRolesForStage(stage){
-  return state.items.filter(it => isRole(it) && (String(it.Stage)==="ALL" || Number(it.Stage)===Number(stage)));
-}
-function filterAllRoles(){
-  return state.items.filter(it => isRole(it));
-}
-function filterTasksForStage(stage){
-  return state.items.filter(it => isTask(it) && Number(it.Stage)===Number(stage));
-}
-
-function rolePoints(roleId){
-  const it = state.items.find(x => x.ItemID === roleId);
-  return it ? Number(it.Points || 0) : 0;
-}
-function sumRolePoints(roleIds){
-  return (roleIds || []).reduce((sum, rid) => sum + rolePoints(rid), 0);
-}
-
+/* ======================= UI HELPERS ======================= */
 function makeHelp(tooltip){
   const help = document.createElement("span");
   help.className = "help";
@@ -437,11 +448,16 @@ function makeHelp(tooltip){
 
   help.addEventListener("click", (e) => {
     const isOpen = help.getAttribute("data-open") === "1";
+    // close other open tips
+    document.querySelectorAll(".help[data-open='1']").forEach(x => x.setAttribute("data-open","0"));
     help.setAttribute("data-open", isOpen ? "0" : "1");
     e.stopPropagation();
   });
   return help;
 }
+document.addEventListener("click", () => {
+  document.querySelectorAll(".help[data-open='1']").forEach(x => x.setAttribute("data-open","0"));
+});
 
 function statusBadge(statusKey){
   const s = STATUS[statusKey] || STATUS.NOT_STARTED;
@@ -451,34 +467,278 @@ function statusBadge(statusKey){
   return span;
 }
 
-function englishName(full){
-  const s = String(full || "");
-  const m = s.match(/\(([^)]+)\)/);
-  if (m) return m[1].trim();
-  return s.split(" ")[0].trim();
+/* ======================= DB LOADERS ======================= */
+function normalizeSettings(rows){
+  const out = {...DEFAULT_SETTINGS};
+  (rows || []).forEach(r => { out[String(r.Key)] = r.Value; });
+
+  // parse numbers where expected
+  ["MIN_ROLE_POINTS","MAX_ROLE_POINTS","MAX_ROLES_PER_STUDENT","CLAIM_WINDOW_SECONDS","CLAIM_MAX_IN_WINDOW","CURRENT_DAYNO"].forEach(k => {
+    if (out[k] !== undefined && out[k] !== null && out[k] !== "") {
+      const n = Number(out[k]);
+      if (Number.isFinite(n)) out[k] = n;
+    }
+  });
+  return out;
 }
+
+async function loadSettings(){
+  const { data, error } = await sb
+    .from("settings")
+    .select("Key,Value");
+  if (error) throw error;
+  state.settings = normalizeSettings(data || []);
+  state.currentDayNo = Number(state.settings.CURRENT_DAYNO || 1) || 1;
+}
+
+async function loadItems(forAdmin){
+  // active items (used by app logic)
+  const { data: activeData, error: activeErr } = await sb
+    .from("items")
+    .select("*")
+    .eq("Active", true)
+    .order("Order", { ascending: true })
+    .order("Title", { ascending: true });
+
+  if (activeErr) throw activeErr;
+  state.items = activeData || [];
+
+  // admin manage list (all items)
+  if (forAdmin){
+    const { data: allData, error: allErr } = await sb
+      .from("items")
+      .select("*")
+      .order("Order", { ascending: true })
+      .order("Title", { ascending: true });
+    if (allErr) throw allErr;
+    state.itemsAll = allData || [];
+  } else {
+    state.itemsAll = state.items.slice();
+  }
+}
+
+async function loadCalendar(){
+  const { data, error } = await sb
+    .from("calendar")
+    .select("*")
+    .order("DayNo", { ascending: true });
+  if (error) throw error;
+  state.calendar = data || [];
+}
+
+async function upsertSetting(key, value){
+  const { data: existing, error: selErr } = await sb
+    .from("settings")
+    .select("Key")
+    .eq("Key", String(key))
+    .maybeSingle();
+  if (selErr) throw selErr;
+
+  const payload = { Key: String(key), Value: String(value) };
+
+  if (existing?.Key){
+    const { error: upErr } = await sb
+      .from("settings")
+      .update(payload)
+      .eq("Key", String(key));
+    if (upErr) throw upErr;
+  } else {
+    const { error: insErr } = await sb
+      .from("settings")
+      .insert(payload);
+    if (insErr) throw insErr;
+  }
+}
+
+async function loadGroups(){
+  const { data, error } = await sb
+    .from("groups")
+    .select("*")
+    .order("Class", { ascending: true })
+    .order("GroupID", { ascending: true });
+  if (error) throw error;
+  state.groups = data || [];
+}
+
+async function loadGroupById(groupId){
+  const { data, error } = await sb
+    .from("groups")
+    .select("*")
+    .eq("GroupID", Number(groupId))
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+function rolePoints(roleId){
+  const it = state.items.find(x => x.ItemID === roleId);
+  return it ? Number(it.Points || 0) : 0;
+}
+function sumRolePoints(roleIds){
+  return (roleIds || []).reduce((sum, rid) => sum + rolePoints(rid), 0);
+}
+
+function filterRolesForStage(stage){
+  return state.items.filter(it => isRole(it) && appliesToStage(it.Stage, stage));
+}
+function filterAllRoles(){
+  return state.items.filter(it => isRole(it));
+}
+function filterTasksForStage(stage){
+  // tasks CAN be ALL, so include them
+  return state.items.filter(it => isTask(it) && appliesToStage(it.Stage, stage));
+}
+
+/* ======================= TASK STATUS MAP ======================= */
+function taskStatusToMap(rows){
+  const map = {};
+  (rows || []).forEach(r => {
+    map[String(r.TaskID)] = {
+      status: String(r.Status || "NOT_STARTED"),
+      note: String(r.Note || "")
+    };
+  });
+  return map;
+}
+
+function taskStatusKey(taskId){
+  return state.taskStatus[String(taskId)]?.status || "NOT_STARTED";
+}
+function taskNote(taskId){
+  return state.taskStatus[String(taskId)]?.note || "";
+}
+
+/* ======================= STUDENT: LOAD DAY + HISTORY ======================= */
+async function loadStudentDay(dayNo){
+  const studentId = Number(state.user.StudentID);
+
+  // assignments for this student on this day
+  const { data: assigns, error: aErr } = await sb
+    .from("dailyassignments")
+    .select("DayNo,StudentID,RoleID")
+    .eq("StudentID", studentId)
+    .eq("DayNo", Number(dayNo));
+
+  if (aErr) throw aErr;
+  state.assignments = (assigns || []).map(r => String(r.RoleID));
+
+  // role checks for this day
+  const { data: checks, error: cErr } = await sb
+    .from("rolechecks")
+    .select("DayNo,StudentID,RoleID,Done,Note")
+    .eq("StudentID", studentId)
+    .eq("DayNo", Number(dayNo));
+
+  if (cErr) throw cErr;
+
+  const map = {};
+  (checks || []).forEach(r => {
+    map[String(r.RoleID)] = { done: !!r.Done, note: String(r.Note || "") };
+  });
+  state.roleChecks = map;
+
+  // compute summary for TODAY view
+  const earned = state.assignments
+    .filter(rid => state.roleChecks[rid]?.done === true)
+    .reduce((sum, rid) => sum + rolePoints(rid), 0);
+
+  const unfinished = state.assignments.filter(rid => state.roleChecks[rid]?.done !== true).length;
+  state.summary = { earnedPoints: earned, unfinishedCount: unfinished };
+
+  // history data (previous days)
+  const { data: prevAssigns, error: pErr } = await sb
+    .from("dailyassignments")
+    .select("DayNo,RoleID")
+    .eq("StudentID", studentId)
+    .lt("DayNo", Number(dayNo));
+
+  if (pErr) throw pErr;
+
+  const { data: prevChecks, error: pcErr } = await sb
+    .from("rolechecks")
+    .select("DayNo,RoleID,Done")
+    .eq("StudentID", studentId)
+    .lt("DayNo", Number(dayNo));
+
+  if (pcErr) throw pcErr;
+
+  // build quick lookup: dayNo -> roleId -> done
+  const doneByDay = {};
+  (prevChecks || []).forEach(r => {
+    const d = Number(r.DayNo);
+    const rid = String(r.RoleID);
+    doneByDay[d] = doneByDay[d] || {};
+    doneByDay[d][rid] = !!r.Done;
+  });
+
+  // aggregate assignments by day
+  const rolesByDay = {};
+  (prevAssigns || []).forEach(r => {
+    const d = Number(r.DayNo);
+    rolesByDay[d] = rolesByDay[d] || [];
+    rolesByDay[d].push(String(r.RoleID));
+  });
+
+  const hist = Object.entries(rolesByDay)
+    .map(([dStr, rids]) => {
+      const d = Number(dStr);
+      const label = getDayObj(d)?.Label || `Day ${d}`;
+      const pts = sumRolePoints(rids);
+      const allDone = (rids || []).length > 0 && (rids || []).every(rid => doneByDay[d]?.[rid] === true);
+      return { dayNo: d, title: label, points: pts, done: allDone };
+    })
+    .sort((a,b) => b.dayNo - a.dayNo);
+
+  state.history = hist;
+
+  // total earned points so far (Done=true across all previous days)
+  const { data: allChecksDone, error: adErr } = await sb
+    .from("rolechecks")
+    .select("RoleID,Done")
+    .eq("StudentID", studentId)
+    .eq("Done", true);
+
+  if (adErr) throw adErr;
+
+  state.totalEarnedPoints = (allChecksDone || [])
+    .map(r => String(r.RoleID))
+    .reduce((sum, rid) => sum + rolePoints(rid), 0);
+}
+
+/* ======================= STUDENT: TASK STATUS ======================= */
 let taskPoll = null;
 
-async function loadStudentTaskStatus(dayNo){
-  if (state.role !== "student" || !state.user) return;
+async function loadTaskStatusForGroup(groupId) {
+  const { data, error } = await sb
+    .from("taskstatus")
+    .select("GroupID,TaskID,Status,Note")
+    .eq("GroupID", Number(groupId));
 
-  // Requires Apps Script getGroup to allow viewer="student" and return taskStatus
-  const res = await apiGet("getGroup", { groupId: state.user.groupId, viewer:"student", dayNo });
-  if (!res.ok) {
-  qs("loginError").textContent = res.error || "Login failed";
-  if (res.raw) console.log("RAW RESPONSE:", res.raw);
-  return;
+  if (error) {
+    console.warn("taskstatus load failed:", error);
+    state.taskStatus = {}; // fall back: everything shows as NOT_STARTED
+    return;
+  }
+
+  state.taskStatus = taskStatusToMap(data || []);
 }
 
-  state.taskStatus = res.taskStatus || {};
+async function loadStudentTaskStatus(){
+  if (state.role !== "student" || !state.user) return;
+  await loadTaskStatusForGroup(state.user.GroupID);
 }
 
 function startStudentTaskPolling(){
   stopStudentTaskPolling();
   taskPoll = setInterval(async () => {
-    if (state.role !== "student" || !state.user) return;
-    await loadStudentTaskStatus(state.selectedDayNo);
-    renderTasks();
+    try{
+      if (state.role !== "student" || !state.user) return;
+      await loadStudentTaskStatus();
+      renderTasks();
+    } catch(e){
+      // keep silent polling failures
+      console.log("poll error:", e);
+    }
   }, 8000);
 }
 
@@ -486,7 +746,8 @@ function stopStudentTaskPolling(){
   if (taskPoll) clearInterval(taskPoll);
   taskPoll = null;
 }
-/* ---------------- DAY SELECT ---------------- */
+
+/* ======================= DAY SELECT ======================= */
 function buildDaySelect(){
   const sel = qs("daySelect");
   sel.innerHTML = "";
@@ -506,6 +767,9 @@ function buildDaySelect(){
 
     addOpt(today);
     addOpt(tomorrow);
+
+    // guard if tomorrow doesn't exist
+    if (![today, tomorrow].includes(state.selectedDayNo)) state.selectedDayNo = today;
     sel.value = String(state.selectedDayNo);
   } else {
     state.calendar.forEach(d => {
@@ -514,6 +778,10 @@ function buildDaySelect(){
       opt.textContent = `${d.Label} — ${stageName(d.Stage)}`;
       sel.appendChild(opt);
     });
+
+    // guard selected day exists
+    const dayNos = state.calendar.map(d => Number(d.DayNo));
+    if (!dayNos.includes(Number(state.selectedDayNo))) state.selectedDayNo = state.currentDayNo;
     sel.value = String(state.selectedDayNo);
   }
 
@@ -525,11 +793,11 @@ function buildDaySelect(){
 
     if (state.role === "student") {
       await loadStudentDay(state.selectedDayNo);
-await loadStudentTaskStatus(state.selectedDayNo);
-renderRoles();
-renderTasks();
-renderHistory();
-return;
+      await loadStudentTaskStatus();
+      renderRoles();
+      renderTasks();
+      renderHistory();
+      return;
     }
 
     // admin
@@ -553,17 +821,174 @@ function renderTodayNote(){
   note.textContent = day.Note || "";
 }
 
-/* ---------------- STUDENT DAY LOAD ---------------- */
-async function loadStudentDay(dayNo){
-  const res = await apiGet("getStudentDay", { studentId: state.user.studentId, dayNo: dayNo });
-  if (!res.ok) { alert(res.error || "Could not load day"); return; }
-  state.assignments = res.assignments || [];
-  state.roleChecks = res.roleChecks || {};
-  state.summary = res.summary || state.summary;
-  state.history = res.history || [];
-  state.totalEarnedPoints = Number(res.totalEarnedPoints || 0);
+/* ======================= ROLES: SAVE / CLAIM / UNCLAIM ======================= */
+let noteTimers = {};
+
+function roleCheckObj(roleId){
+  return state.roleChecks[String(roleId)] || { done:false, note:"" };
 }
 
+async function upsertRoleCheck({dayNo, studentId, roleId, done, note}){
+  // try update existing, else insert
+  const { data: existing, error: selErr } = await sb
+    .from("rolechecks")
+    .select("id")
+    .eq("DayNo", Number(dayNo))
+    .eq("StudentID", Number(studentId))
+    .eq("RoleID", String(roleId))
+    .maybeSingle();
+
+  if (selErr) throw selErr;
+
+  const payload = {
+    DayNo: Number(dayNo),
+    StudentID: Number(studentId),
+    RoleID: String(roleId),
+    Done: !!done,
+    Note: String(note || ""),
+    UpdatedAt: new Date().toISOString(),
+  };
+
+  if (existing?.id){
+    const { error: upErr } = await sb
+      .from("rolechecks")
+      .update(payload)
+      .eq("id", existing.id);
+    if (upErr) throw upErr;
+  } else {
+    const { error: insErr } = await sb
+      .from("rolechecks")
+      .insert(payload);
+    if (insErr) throw insErr;
+  }
+}
+
+async function saveRoleCheck(roleId, done, note){
+  await upsertRoleCheck({
+    dayNo: state.selectedDayNo,
+    studentId: state.user.StudentID,
+    roleId,
+    done,
+    note
+  });
+}
+
+function getRoleItem(roleId){
+  return state.items.find(x => String(x.ItemID) === String(roleId)) || null;
+}
+
+async function checkSingleOwnerTaken(roleId){
+  const r = getRoleItem(roleId);
+  if (!r) return false;
+  if (String(r.SingleOwner).toUpperCase() !== "TRUE") return false;
+
+  // check within the student's group (cached IDs)
+  const ids = state.groupMemberIds || [];
+  if (!ids.length) return false;
+
+  const { data, error } = await sb
+    .from("dailyassignments")
+    .select("StudentID")
+    .eq("DayNo", Number(state.selectedDayNo))
+    .eq("RoleID", String(roleId))
+    .in("StudentID", ids);
+
+  if (error) throw error;
+  const takenByOther = (data || []).some(x => Number(x.StudentID) !== Number(state.user.StudentID));
+  return takenByOther;
+}
+
+async function claimRole({studentId, roleId, dayNo}){
+  // prevent duplicate
+  const { data: existing, error: selErr } = await sb
+    .from("dailyassignments")
+    .select("id")
+    .eq("DayNo", Number(dayNo))
+    .eq("StudentID", Number(studentId))
+    .eq("RoleID", String(roleId))
+    .maybeSingle();
+  if (selErr) throw selErr;
+
+  if (existing?.id) return;
+
+  const { error: insErr } = await sb
+    .from("dailyassignments")
+    .insert({
+      DayNo: Number(dayNo),
+      StudentID: Number(studentId),
+      RoleID: String(roleId),
+      ClaimedAt: new Date().toISOString(),
+    });
+  if (insErr) throw insErr;
+}
+
+async function unclaimRole({studentId, roleId, dayNo}){
+  const { error } = await sb
+    .from("dailyassignments")
+    .delete()
+    .eq("DayNo", Number(dayNo))
+    .eq("StudentID", Number(studentId))
+    .eq("RoleID", String(roleId));
+  if (error) throw error;
+}
+
+async function tryClaimRoleStudent(roleId){
+  // client-side rules (replacing server checks)
+  if (!interactiveStudentDay()){
+    alert("You can only pick roles for today.");
+    return;
+  }
+
+  const maxRoles = Number(state.settings.MAX_ROLES_PER_STUDENT || 4);
+  if ((state.assignments || []).length >= maxRoles){
+    alert(`You already have ${maxRoles} roles today.`);
+    return;
+  }
+
+  // single-owner check
+  const taken = await checkSingleOwnerTaken(roleId);
+  if (taken){
+    alert("That role is already taken by someone in your group.");
+    return;
+  }
+
+  // points range warning (confirm)
+  const currentPts = sumRolePoints(state.assignments);
+  const nextPts = currentPts + rolePoints(roleId);
+  const minPts = Number(state.settings.MIN_ROLE_POINTS || 8);
+  const maxPts = Number(state.settings.MAX_ROLE_POINTS || 12);
+
+  if (nextPts < minPts || nextPts > maxPts){
+    const ok = confirm(
+      `This will make your total role points today = ${nextPts}.\n\nTarget range is ${minPts}–${maxPts}.\n\nIf your teacher said it’s OK, press OK.`
+    );
+    if (!ok) return;
+  }
+
+  try{
+    await claimRole({ studentId: state.user.StudentID, roleId, dayNo: state.selectedDayNo });
+    await loadStudentDay(state.selectedDayNo);
+    renderRoles();
+    renderHistory();
+  } catch(e){
+    console.log(e);
+    alert("Could not pick role (permissions / policy / connection).");
+  }
+}
+
+async function removeRoleStudent(roleId){
+  try{
+    await unclaimRole({ studentId: state.user.StudentID, roleId, dayNo: state.selectedDayNo });
+    await loadStudentDay(state.selectedDayNo);
+    renderRoles();
+    renderHistory();
+  } catch(e){
+    console.log(e);
+    alert("Could not remove role.");
+  }
+}
+
+/* ======================= STUDENT: ROLES RENDER ======================= */
 function updatePointsPill(){
   const pill = qs("pointsPill");
 
@@ -581,58 +1006,13 @@ function updatePointsPill(){
   const maxPts = Number(state.settings.MAX_ROLE_POINTS || 12);
   const maxRoles = Number(state.settings.MAX_ROLES_PER_STUDENT || 4);
 
-  const roleCount = state.assignments.length;
+  const roleCount = (state.assignments || []).length;
 
   pill.textContent = `Today: ${todayPtsAssigned} pts • Roles: ${roleCount}/${maxRoles} • Earned: ${earned} • Unfinished: ${unfinished}`;
 
   if (todayPtsAssigned < minPts) pill.className = "pill warn";
   else if (todayPtsAssigned > maxPts) pill.className = "pill bad";
   else pill.className = "pill good";
-}
-
-/* ---------------- STUDENT ROLES (unchanged) ---------------- */
-let noteTimers = {};
-
-async function saveRoleCheck(roleId, done, note){
-  const payload = {
-    action:"setRoleCheck",
-    viewer:"student",
-    dayNo: state.selectedDayNo,
-    studentId: state.user.studentId,
-    roleId,
-    done: !!done,
-    note: note || "",
-  };
-  const res = await apiPost(payload);
-  if (!res.ok) alert(res.error || "Could not save");
-}
-
-function roleCheckObj(roleId){
-  return state.roleChecks[roleId] || { done:false, note:"" };
-}
-
-async function tryClaimRoleStudent(roleId){
-  const res = await apiPost({ action:"claimRole", studentId: state.user.studentId, roleId, dayNo: state.selectedDayNo });
-  if (res.ok) { state.assignments.push(roleId); renderRoles(); return; }
-
-  if (res.code === "CONFIRM_REQUIRED") {
-    const ok = confirm(`${res.error}\n\nIf your teacher said it is OK, press OK.\nIf not, press Cancel.`);
-    if (!ok) return;
-    const res2 = await apiPost({ action:"claimRole", studentId: state.user.studentId, roleId, dayNo: state.selectedDayNo, confirm:true });
-    if (!res2.ok) { alert(res2.error || "Could not pick role"); return; }
-    state.assignments.push(roleId);
-    renderRoles();
-    return;
-  }
-
-  alert(res.error || "Could not pick role");
-}
-
-async function removeRoleStudent(roleId){
-  const res = await apiPost({ action:"unclaimRole", studentId: state.user.studentId, roleId, dayNo: state.selectedDayNo });
-  if (!res.ok) { alert(res.error || "Could not remove role"); return; }
-  state.assignments = state.assignments.filter(x => x !== roleId);
-  renderRoles();
 }
 
 function renderRoles(){
@@ -643,7 +1023,7 @@ function renderRoles(){
 
   updatePointsPill();
 
-  if (state.role === "admin") return; // admin left panel replaces this entirely
+  if (state.role === "admin") return;
 
   const interactive = interactiveStudentDay();
   const assigned = state.assignments || [];
@@ -655,7 +1035,7 @@ function renderRoles(){
   }
 
   assigned.forEach(roleId => {
-    const it = state.items.find(x => x.ItemID === roleId);
+    const it = getRoleItem(roleId);
     if (!it) return;
 
     const row = document.createElement("div");
@@ -681,7 +1061,7 @@ function renderRoles(){
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = `${String(it.Stage)==="ALL" ? "All stages" : ("Stage " + it.Stage)} • ${it.Points || 0} pts`;
+    meta.textContent = `${stageTag(it.Stage)==="ALL" ? "All stages" : ("Stage " + it.Stage)} • ${it.Points || 0} pts`;
 
     const noteBox = document.createElement("textarea");
     noteBox.placeholder = "What did you do today? (short)";
@@ -689,26 +1069,42 @@ function renderRoles(){
     noteBox.disabled = !interactive;
 
     cb.addEventListener("change", async () => {
-  if (cb.checked) {
-    const text = (noteBox.value || "").trim();
-    if (!text) {
-      cb.checked = false;
-      alert("Write one short sentence about what you did today, then tick “Done today”.");
-      noteBox.focus();
-      return;
-    }
-  }
+      if (cb.checked) {
+        const text = (noteBox.value || "").trim();
+        if (!text) {
+          cb.checked = false;
+          alert("Write one short sentence about what you did today, then tick “Done today”.");
+          noteBox.focus();
+          return;
+        }
+      }
 
-  await saveRoleCheck(roleId, cb.checked, noteBox.value);
-  state.roleChecks[roleId] = { done: cb.checked, note: noteBox.value };
-});
+      try{
+        await saveRoleCheck(roleId, cb.checked, noteBox.value);
+        state.roleChecks[String(roleId)] = { done: cb.checked, note: noteBox.value };
+        // refresh summary pill
+        state.summary.earnedPoints = state.assignments
+          .filter(rid => state.roleChecks[rid]?.done === true)
+          .reduce((sum, rid) => sum + rolePoints(rid), 0);
+        state.summary.unfinishedCount = state.assignments.filter(rid => state.roleChecks[rid]?.done !== true).length;
+        updatePointsPill();
+      } catch(e){
+        console.log(e);
+        alert("Could not save. Check permissions / connection.");
+        cb.checked = !cb.checked;
+      }
+    });
 
     noteBox.addEventListener("input", () => {
       if (!interactive) return;
       clearTimeout(noteTimers[roleId]);
       noteTimers[roleId] = setTimeout(async () => {
-        await saveRoleCheck(roleId, cb.checked, noteBox.value);
-        state.roleChecks[roleId] = { done: cb.checked, note: noteBox.value };
+        try{
+          await saveRoleCheck(roleId, cb.checked, noteBox.value);
+          state.roleChecks[String(roleId)] = { done: cb.checked, note: noteBox.value };
+        } catch(e){
+          console.log(e);
+        }
       }, 600);
     });
 
@@ -742,6 +1138,7 @@ function renderRoles(){
   const availableWrap = qs("availableRoles");
   availableWrap.innerHTML = "";
 
+  // preview day: show roles but disabled
   if (!interactive) {
     picker.classList.remove("hidden");
     const roles = filterRolesForStage(stage);
@@ -761,7 +1158,7 @@ function renderRoles(){
 
       const meta = document.createElement("div");
       meta.className = "meta";
-      meta.textContent = `${String(it.Stage)==="ALL" ? "All stages" : ("Stage "+it.Stage)} • ${it.Points||0} pts`;
+      meta.textContent = `${stageTag(it.Stage)==="ALL" ? "All stages" : ("Stage "+it.Stage)} • ${it.Points||0} pts`;
 
       txt.appendChild(title);
       txt.appendChild(meta);
@@ -783,12 +1180,12 @@ function renderRoles(){
     return;
   }
 
+  // today: only show picker if they can still add roles
   const maxRoles = Number(state.settings.MAX_ROLES_PER_STUDENT || 4);
   if (assigned.length >= maxRoles) {
     picker.classList.add("hidden");
     return;
   }
-
   picker.classList.remove("hidden");
 
   const roles = filterRolesForStage(stage);
@@ -810,7 +1207,7 @@ function renderRoles(){
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = `${String(it.Stage)==="ALL" ? "All stages" : ("Stage "+it.Stage)} • ${it.Points||0} pts`;
+    meta.textContent = `${stageTag(it.Stage)==="ALL" ? "All stages" : ("Stage "+it.Stage)} • ${it.Points||0} pts`;
 
     txt.appendChild(title);
     txt.appendChild(meta);
@@ -832,6 +1229,8 @@ function renderRoles(){
     availableWrap.appendChild(row);
   });
 }
+
+/* ======================= HISTORY RENDER ======================= */
 function renderHistory(){
   const meta = qs("historyMeta");
   const list = qs("historyList");
@@ -841,7 +1240,6 @@ function renderHistory(){
   list.innerHTML = "";
 
   const items = (state.history || []).slice().sort((a,b) => Number(b.dayNo) - Number(a.dayNo));
-
   if (!items.length) {
     list.innerHTML = `<div class="note">No history yet.</div>`;
     return;
@@ -868,7 +1266,6 @@ function renderHistory(){
     txt.appendChild(title);
     txt.appendChild(meta2);
 
-    // message if they forgot to check
     if (!h.done) {
       const warn = document.createElement("div");
       warn.className = "note";
@@ -877,23 +1274,35 @@ function renderHistory(){
     }
 
     left.appendChild(txt);
-
     row.appendChild(left);
     list.appendChild(row);
   });
 }
 
-/* ---------------- TASKS (unchanged) ---------------- */
+/* ======================= TASKS RENDER + SAVE ======================= */
 function allowedStatusOptions(){
   if (state.role === "admin") return ["NOT_STARTED","DOING","READY","OK","FIX"];
   return ["NOT_STARTED","DOING","READY"];
 }
 
-function taskStatusKey(taskId){
-  return state.taskStatus[taskId]?.status || "NOT_STARTED";
-}
-function taskNote(taskId){
-  return state.taskStatus[taskId]?.note || "";
+async function setTaskStatusDb({ groupId, taskId, status, note, updatedBy }) {
+  const payload = {
+    GroupID: Number(groupId),
+    TaskID: String(taskId),
+    Status: String(status),
+    Note: String(note || ""),
+    UpdatedBy: String(updatedBy || ""),
+    UpdatedAt: new Date().toISOString(),
+  };
+
+  const { error } = await sb
+    .from("taskstatus")
+    .upsert(payload, {
+      onConflict: "GroupID,TaskID",
+      ignoreDuplicates: false
+    });
+
+  if (error) throw error;
 }
 
 function renderTasks(){
@@ -901,16 +1310,32 @@ function renderTasks(){
   list.innerHTML = "";
 
   const currentStage = getStageForSelectedDay();
-  if (currentStage === 0) {
-    list.innerHTML = `<div class="note">No tiny-home tasks today.</div>`;
-    qs("progressPill").textContent = "Progress: —";
-    return;
-  }
+if (currentStage === 0) {
+  const n = document.createElement("div");
+  n.className = "note";
+  n.textContent = "No project day — no tasks to show.";
+  list.appendChild(n);
+  qs("progressPill").textContent = "Progress: —";
+  return;
+}
 
-  const allTasks = state.items.filter(isTask).map(t => ({...t, stageNum:Number(t.Stage||0)}));
-  const unfinishedPrev = allTasks.filter(t => t.stageNum < currentStage && taskStatusKey(t.ItemID) !== "OK");
-  const completedPrev  = allTasks.filter(t => t.stageNum < currentStage && taskStatusKey(t.ItemID) === "OK");
-  const currentTasks   = allTasks.filter(t => t.stageNum === currentStage);
+const allTasksRaw = state.items.filter(isTask);
+
+// split tasks into numeric-stage tasks and ALL-stage tasks
+const tasksAllStages = allTasksRaw.filter(t => stageTag(t.Stage) === "ALL");
+const tasksNumeric   = allTasksRaw
+  .map(t => ({ ...t, stageNum: stageNum(t.Stage) }))     // stageNum: 1..4 or null
+  .filter(t => t.stageNum !== null);                     // keep only numeric
+
+// unfinished/completed “previous stages” should only apply to numeric tasks
+const unfinishedPrev = tasksNumeric.filter(t => t.stageNum < currentStage && taskStatusKey(t.ItemID) !== "OK");
+const completedPrev  = tasksNumeric.filter(t => t.stageNum < currentStage && taskStatusKey(t.ItemID) === "OK");
+
+// “current tasks” = tasks for this stage + ALL-stage tasks
+const currentTasks = [
+  ...tasksAllStages,
+  ...tasksNumeric.filter(t => t.stageNum === currentStage),
+];
 
   // popup once per day (students only, only on TODAY)
   if (state.role === "student" && interactiveStudentDay() && unfinishedPrev.length) {
@@ -921,130 +1346,142 @@ function renderTasks(){
     }
   }
 
-  // helper to render a task row
   const renderTaskRow = (t, sectionLabel) => {
-    const current = taskStatusKey(t.ItemID);
-    const row = document.createElement("div");
-    row.className = "item";
+  const current = taskStatusKey(t.ItemID);
 
-    const left = document.createElement("div");
-    left.className = "left";
+  const row = document.createElement("div");
+  row.className = "item";
 
-    const txt = document.createElement("div");
-    txt.className = "txt";
+  const left = document.createElement("div");
+  left.className = "left";
 
-    const title = document.createElement("div");
-    title.className = "title";
-    title.textContent = t.Title;
+  const txt = document.createElement("div");
+  txt.className = "txt";
 
-    const meta = document.createElement("div");
-    meta.className = "meta";
-    meta.textContent = `${sectionLabel} • Stage ${t.Stage}`;
+  const title = document.createElement("div");
+  title.className = "title";
+  title.textContent = t.Title;
 
-    txt.appendChild(title);
-    txt.appendChild(meta);
-    left.appendChild(txt);
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  meta.textContent = `${sectionLabel} • ${stageTag(t.Stage) === "ALL" ? "All stages" : ("Stage " + t.Stage)}`;
 
-    const right = document.createElement("div");
-    right.style.display = "flex";
-    right.style.flexDirection = "column";
-    right.style.gap = "6px";
-    right.style.alignItems = "flex-end";
+  txt.appendChild(title);
+  txt.appendChild(meta);
+  left.appendChild(txt);
 
-    // build dropdown options, but ensure current status is visible even if not in student options
-    const baseOpts = allowedStatusOptions();
-    const keys = baseOpts.includes(current) ? baseOpts : [current, ...baseOpts];
+  const right = document.createElement("div");
+  right.style.display = "flex";
+  right.style.flexDirection = "column";
+  right.style.gap = "6px";
+  right.style.alignItems = "flex-end";
 
-    const sel = document.createElement("select");
-    keys.forEach(k => {
-      const o = document.createElement("option");
-      o.value = k;
-      o.textContent = (STATUS[k] ? STATUS[k].label : k);
-      sel.appendChild(o);
-    });
-    sel.value = current;
-    
-    // LOCKING RULES:
-    // - Students cannot change if teacher marked OK or FIX
-    // - Students also cannot edit on preview day
-    const studentLocked = (state.role === "student") && (!interactiveStudentDay() || current === "OK" || current === "FIX");
-    if (studentLocked) sel.disabled = true;
+  // Admin note box (single instance)
+  let ta = null;
+  if (state.role === "admin") {
+    ta = document.createElement("textarea");
+    ta.placeholder = "Teacher note (optional)";
+    ta.value = taskNote(t.ItemID);
 
-    // If student sees FIX and there is a teacher note, show it
-    if (state.role === "student" && current === "FIX" && taskNote(t.ItemID)) {
-      const n = document.createElement("div");
-      n.className = "note";
-      n.textContent = `Teacher note: ${taskNote(t.ItemID)}`;
-      right.appendChild(n);
-    }
-
-    sel.addEventListener("change", async () => {
-      // extra safety: refuse student change when locked
-      if (state.role === "student" && (current === "OK" || current === "FIX")) {
-        sel.value = current;
-        return;
-      }
-
-      const newStatus = sel.value;
-
-      // If admin is changing an OK task, force a confirm (optional safety)
-      if (state.role === "admin" && current === "OK" && newStatus !== "OK") {
-        const ok = confirm("This task is already Checked OK. Change it anyway?");
-        if (!ok) { sel.value = current; return; }
-      }
-
-      const res = await apiPost({
-        action:"setTaskStatus",
-        viewer: state.role,
-        dayNo: state.selectedDayNo,
-        groupId: state.role === "admin" ? state.adminGroupId : state.user.groupId,
-        taskId: t.ItemID,
-        status: newStatus,
-        note: (state.role === "admin") ? (taskNote(t.ItemID)) : "",
-        studentId: state.role === "student" ? state.user.studentId : "",
-      });
-
-      if (!res.ok) { alert(res.error || "Update failed"); sel.value = current; return; }
-      state.taskStatus[t.ItemID] = state.taskStatus[t.ItemID] || {};
-      state.taskStatus[t.ItemID].status = newStatus;
-      renderTasks();
-    });
-
-    right.appendChild(statusBadge(current));
-    right.appendChild(sel);
-
-    // admin note box (unchanged)
-    if (state.role === "admin") {
-      const ta = document.createElement("textarea");
-      ta.placeholder = "Teacher note (optional)";
-      ta.value = taskNote(t.ItemID);
-      ta.addEventListener("change", async () => {
-        const res = await apiPost({
-          action:"setTaskStatus",
-          viewer:"admin",
-          dayNo: state.selectedDayNo,
-          groupId: state.adminGroupId,
+    ta.addEventListener("change", async () => {
+      const groupId = state.adminGroupId;
+      const updatedBy = `admin:${state.adminCode || ""}`;
+      try {
+        await setTaskStatusDb({
+          groupId,
           taskId: t.ItemID,
           status: taskStatusKey(t.ItemID),
           note: ta.value,
-          studentId: "",
+          updatedBy
         });
-        if (!res.ok) alert(res.error || "Could not save note");
-        else {
-          state.taskStatus[t.ItemID] = state.taskStatus[t.ItemID] || {};
-          state.taskStatus[t.ItemID].note = ta.value;
-        }
-      });
-      right.appendChild(ta);
+        state.taskStatus[String(t.ItemID)] = state.taskStatus[String(t.ItemID)] || {};
+        state.taskStatus[String(t.ItemID)].note = ta.value;
+      } catch (e) {
+        console.log(e);
+        alert("Could not save note.");
+      }
+    });
+  }
+
+  const baseOpts = allowedStatusOptions();
+  const keys = baseOpts.includes(current) ? baseOpts : [current, ...baseOpts];
+
+  const sel = document.createElement("select");
+  keys.forEach(k => {
+    const o = document.createElement("option");
+    o.value = k;
+    o.textContent = (STATUS[k] ? STATUS[k].label : k);
+    sel.appendChild(o);
+  });
+  sel.value = current;
+
+  const studentLocked =
+    (state.role === "student") &&
+    (!interactiveStudentDay() || current === "OK" || current === "FIX");
+
+  if (studentLocked) sel.disabled = true;
+
+  // Student sees teacher note only when FIX
+  if (state.role === "student" && current === "FIX" && taskNote(t.ItemID)) {
+    const n = document.createElement("div");
+    n.className = "note";
+    n.textContent = `Teacher note: ${taskNote(t.ItemID)}`;
+    right.appendChild(n);
+  }
+
+  sel.addEventListener("change", async () => {
+    // prevent changing OK/FIX as student (extra guard)
+    if (state.role === "student" && (current === "OK" || current === "FIX")) {
+      sel.value = current;
+      return;
     }
 
-    row.appendChild(left);
-    row.appendChild(makeHelp(t.Tooltip));
-    row.appendChild(right);
-    return row;
-  };
+    const newStatus = sel.value;
 
-  // SECTION 1: Missions (unfinished previous stage tasks)
+    if (state.role === "admin" && current === "OK" && newStatus !== "OK") {
+      const ok = confirm("This task is already Checked OK. Change it anyway?");
+      if (!ok) { sel.value = current; return; }
+    }
+
+    const groupId = (state.role === "admin") ? state.adminGroupId : state.user.GroupID;
+    const updatedBy = (state.role === "admin")
+      ? `admin:${state.adminCode || ""}`
+      : `student:${state.user.StudentID}`;
+
+    const noteToSave = (state.role === "admin" && ta) ? ta.value : "";
+
+    try {
+      await setTaskStatusDb({
+        groupId,
+        taskId: t.ItemID,
+        status: newStatus,
+        note: noteToSave,
+        updatedBy
+      });
+
+      state.taskStatus[String(t.ItemID)] = state.taskStatus[String(t.ItemID)] || {};
+      state.taskStatus[String(t.ItemID)].status = newStatus;
+      if (state.role === "admin") state.taskStatus[String(t.ItemID)].note = noteToSave;
+
+      renderTasks();
+    } catch (e) {
+      console.log(e);
+      alert("Update failed (permissions / policy / connection).");
+      sel.value = current;
+    }
+  });
+
+  right.appendChild(statusBadge(current));
+  right.appendChild(sel);
+  if (ta) right.appendChild(ta);
+
+  row.appendChild(left);
+  row.appendChild(makeHelp(t.Tooltip));
+  row.appendChild(right);
+  return row;
+};
+
+  // SECTION 1: unfinished prev
   if (unfinishedPrev.length) {
     const hdr = document.createElement("div");
     hdr.className = "note";
@@ -1057,11 +1494,11 @@ function renderTasks(){
     list.appendChild(div);
   }
 
-  // SECTION 2: Current stage tasks
+  // SECTION 2: current
   const hdr2 = document.createElement("div");
   hdr2.className = "note";
   hdr2.style.margin = "6px 0";
-  hdr2.textContent = `Current stage tasks (Stage ${currentStage})`;
+  hdr2.textContent = `Current tasks (${currentTasks.length}) — Stage ${currentStage} + All-stages`;
   list.appendChild(hdr2);
 
   let okCount = 0;
@@ -1072,7 +1509,7 @@ function renderTasks(){
 
   qs("progressPill").textContent = `Progress: ${okCount}/${currentTasks.length} checked OK`;
 
-  // SECTION 3: Completed previous stage tasks (collapsed)
+  // SECTION 3: completed prev (collapsed)
   if (completedPrev.length) {
     const details = document.createElement("details");
     details.style.marginTop = "10px";
@@ -1093,8 +1530,7 @@ function renderTasks(){
   }
 }
 
-/* ======================= ADMIN REDESIGN ======================= */
-
+/* ======================= ADMIN: TABS ======================= */
 function setAdminTab(which){
   const bO = qs("tabBtnOverview"), bA = qs("tabBtnAssign"), bM = qs("tabBtnManage");
   const tO = qs("adminTabOverview"), tA = qs("adminTabAssign"), tM = qs("adminTabManage");
@@ -1107,25 +1543,84 @@ function setAdminTab(which){
   if (which === "manage"){ bM.classList.add("primary"); bM.classList.remove("ghost"); tM.classList.remove("hidden"); }
 }
 
+/* ======================= ADMIN: LOAD GROUP (members + roles + checks + tasks) ======================= */
+function groupAssignmentsToMaps(assignRows, checkRows){
+  const byStudent = {};
+  (assignRows || []).forEach(r => {
+    const sid = String(r.StudentID);
+    byStudent[sid] = byStudent[sid] || [];
+    byStudent[sid].push(String(r.RoleID));
+  });
+
+  const checksByStudent = {};
+  (checkRows || []).forEach(r => {
+    const sid = String(r.StudentID);
+    const rid = String(r.RoleID);
+    checksByStudent[sid] = checksByStudent[sid] || {};
+    checksByStudent[sid][rid] = { done: !!r.Done, note: String(r.Note || "") };
+  });
+
+  return { byStudent, checksByStudent };
+}
+
 async function loadAdminGroup(){
   if (!state.adminGroupId) return;
 
-  const res = await apiGet("getGroup", { groupId: state.adminGroupId, viewer:"admin", dayNo: state.selectedDayNo });
-  if (!res.ok) { alert(res.error || "Could not load group"); return; }
+  // group row
+  state.group = await loadGroupById(state.adminGroupId);
 
-  state.taskStatus = res.taskStatus || {};
-  state.adminMembers = res.members || [];
+  // members
+  const { data: members, error: mErr } = await sb
+    .from("students")
+    .select("*")
+    .eq("GroupID", Number(state.adminGroupId))
+    .eq("Active", true)
+    .order("Name", { ascending: true });
 
-  // supports v3 or fallback v2
-  state.adminAssignmentsByStudent = res.dailyAssignmentsByStudent || res.assignmentsByStudent || {};
-  state.adminRoleChecksByStudent = res.roleChecksByStudent || {};
+  if (mErr) throw mErr;
+  state.adminMembers = members || [];
 
-  const day = getDayObj(state.selectedDayNo);
-  const stage = day ? day.Stage : "?";
-  const g = res.group || {};
-  qs("adminGroupMeta").textContent = `${g.Class || ""} • ${g.GroupName || g.GroupID} • Day ${state.selectedDayNo} • Stage ${stage}`;
+  const ids = (state.adminMembers || []).map(m => Number(m.StudentID));
+
+  // assignments for selected day
+  let assignRows = [];
+  if (ids.length){
+    const { data, error } = await sb
+      .from("dailyassignments")
+      .select("DayNo,StudentID,RoleID")
+      .eq("DayNo", Number(state.selectedDayNo))
+      .in("StudentID", ids);
+    if (error) throw error;
+    assignRows = data || [];
+  }
+
+  // role checks for selected day
+  let checkRows = [];
+  if (ids.length){
+    const { data, error } = await sb
+      .from("rolechecks")
+      .select("DayNo,StudentID,RoleID,Done,Note")
+      .eq("DayNo", Number(state.selectedDayNo))
+      .in("StudentID", ids);
+    if (error) throw error;
+    checkRows = data || [];
+  }
+
+  const maps = groupAssignmentsToMaps(assignRows, checkRows);
+  state.adminAssignmentsByStudent = maps.byStudent;
+  state.adminRoleChecksByStudent = maps.checksByStudent;
+
+  // task status for this group (not day-scoped)
+  await loadTaskStatusForGroup(state.adminGroupId);
+
+  // meta label
+  const meta = qs("adminGroupMeta");
+  if (meta){
+    meta.textContent = state.group ? `${state.group.Class || ""} • ${state.group.GroupName || ("Group "+state.group.GroupID)}` : "";
+  }
 }
 
+/* ======================= ADMIN: WHO DOING ======================= */
 function renderAdminWhoDoing(){
   const wrap = qs("adminWhoDoing");
   if (!wrap) return;
@@ -1213,6 +1708,7 @@ function renderAdminWhoDoing(){
   });
 }
 
+/* ======================= ADMIN: ASSIGN UI ======================= */
 function renderAdminAssignUI(){
   const studentSel = qs("adminStudentSelect");
   const roleSel = qs("adminRoleSelect");
@@ -1234,7 +1730,7 @@ function renderAdminAssignUI(){
   const stage = day ? Number(day.Stage) : 1;
   const candidates = filterRolesForStage(stage);
 
-  // disable taken single-owner roles
+  // disable taken single-owner roles within group
   const roleById = Object.fromEntries(filterAllRoles().map(r => [r.ItemID, r]));
   const takenSingles = new Set();
   Object.values(state.adminAssignmentsByStudent).forEach(arr => {
@@ -1314,12 +1810,16 @@ function renderAdminAssignUI(){
       btn.textContent = "Remove";
       btn.style.padding = "8px 10px";
       btn.onclick = async () => {
-        const res = await apiPost({ action:"unclaimRole", studentId: sid, roleId: rid, dayNo: state.selectedDayNo, override:true });
-        if (!res.ok) { alert(res.error || "Could not remove"); return; }
-        await loadAdminGroup();
-        renderAdminWhoDoing();
-        renderAdminAssignUI();
-        await renderAdminClassOverview();
+        try{
+          await unclaimRole({ studentId: Number(sid), roleId: rid, dayNo: state.selectedDayNo });
+          await loadAdminGroup();
+          renderAdminWhoDoing();
+          renderAdminAssignUI();
+          await renderAdminClassOverview();
+        } catch(e){
+          console.log(e);
+          alert("Could not remove.");
+        }
       };
 
       right.appendChild(btn);
@@ -1337,17 +1837,24 @@ function renderAdminAssignUI(){
   btnAssign.onclick = async () => {
     const sid = studentSel.value;
     const rid = roleSel.value;
-    const res = await apiPost({ action:"claimRole", studentId: sid, roleId: rid, dayNo: state.selectedDayNo, override:true });
-    if (!res.ok) { alert(res.error || "Could not assign"); return; }
-    await loadAdminGroup();
-    renderAdminWhoDoing();
-    renderStudentRoles();
-    await renderAdminClassOverview();
+    if (!sid || !rid) return;
+
+    try{
+      await claimRole({ studentId: Number(sid), roleId: rid, dayNo: state.selectedDayNo });
+      await loadAdminGroup();
+      renderAdminWhoDoing();
+      renderStudentRoles();
+      await renderAdminClassOverview();
+    } catch(e){
+      console.log(e);
+      alert("Could not assign.");
+    }
   };
 
   renderStudentRoles();
 }
 
+/* ======================= ADMIN: CLASS OVERVIEW (ALL GROUPS IN SAME CLASS) ======================= */
 async function renderAdminClassOverview(){
   const wrap = qs("classOverview");
   const label = qs("adminClassLabel");
@@ -1359,36 +1866,113 @@ async function renderAdminClassOverview(){
   const stage = day ? Number(day.Stage) : 1;
 
   label.textContent = className ? `${className} • Day ${state.selectedDayNo} • Stage ${stage}` : `Day ${state.selectedDayNo}`;
-
   wrap.innerHTML = `<div class="note">Loading…</div>`;
 
-  const tasksForStage = filterTasksForStage(stage).map(t => t.ItemID);
-  const groupsInClass = state.groups.filter(g => String(g.Class || "") === className);
+  if (!className){
+    wrap.innerHTML = `<div class="note">No class selected.</div>`;
+    return;
+  }
 
-  // fetch group snapshots
-  const results = await Promise.all(groupsInClass.map(g =>
-    apiGet("getGroup", { groupId: g.GroupID, viewer:"admin", dayNo: state.selectedDayNo })
-      .then(res => ({ g, res }))
-      .catch(() => ({ g, res: { ok:false } }))
-  ));
+  const groupsInClass = state.groups.filter(g => String(g.Class || "") === className);
+  const groupIDs = groupsInClass.map(g => Number(g.GroupID));
+  const tasksForStage = filterTasksForStage(stage).map(t => String(t.ItemID));
+
+  // 1) class students
+  const { data: classStudents, error: sErr } = await sb
+    .from("students")
+    .select("*")
+    .eq("Class", className)
+    .eq("Active", true);
+
+  if (sErr) { wrap.innerHTML = `<div class="note">Error loading students.</div>`; return; }
+
+  const studentsByGroup = {};
+  (classStudents || []).forEach(st => {
+    const gid = Number(st.GroupID);
+    studentsByGroup[gid] = studentsByGroup[gid] || [];
+    studentsByGroup[gid].push(st);
+  });
+
+  const allStudentIds = (classStudents || []).map(st => Number(st.StudentID));
+
+  // 2) assignments for the day (for whole class)
+  let assignRows = [];
+  if (allStudentIds.length){
+    const { data, error } = await sb
+      .from("dailyassignments")
+      .select("DayNo,StudentID,RoleID")
+      .eq("DayNo", Number(state.selectedDayNo))
+      .in("StudentID", allStudentIds);
+    if (error) { wrap.innerHTML = `<div class="note">Error loading assignments.</div>`; return; }
+    assignRows = data || [];
+  }
+
+  // build assignmentsByStudent for class
+  const assignByStudent = {};
+  assignRows.forEach(r => {
+    const sid = String(r.StudentID);
+    assignByStudent[sid] = assignByStudent[sid] || [];
+    assignByStudent[sid].push(String(r.RoleID));
+  });
+
+  // 3) rolechecks for the day (for whole class)
+  let checkRows = [];
+  if (allStudentIds.length){
+    const { data, error } = await sb
+      .from("rolechecks")
+      .select("StudentID,RoleID,Done")
+      .eq("DayNo", Number(state.selectedDayNo))
+      .in("StudentID", allStudentIds);
+    if (error) { wrap.innerHTML = `<div class="note">Error loading role checks.</div>`; return; }
+    checkRows = data || [];
+  }
+
+  const checksByStudent = {};
+  checkRows.forEach(r => {
+    const sid = String(r.StudentID);
+    const rid = String(r.RoleID);
+    checksByStudent[sid] = checksByStudent[sid] || {};
+    checksByStudent[sid][rid] = !!r.Done;
+  });
+
+  // 4) task statuses for all groups in class (not day-scoped)
+  let tsRows = [];
+  if (groupIDs.length){
+    const { data, error } = await sb
+      .from("taskstatus")
+      .select("GroupID,TaskID,Status")
+      .in("GroupID", groupIDs);
+    if (error) { wrap.innerHTML = `<div class="note">Error loading task status.</div>`; return; }
+    tsRows = data || [];
+  }
+
+  // group -> taskId -> status
+  const tsByGroup = {};
+  tsRows.forEach(r => {
+    const gid = Number(r.GroupID);
+    const tid = String(r.TaskID);
+    tsByGroup[gid] = tsByGroup[gid] || {};
+    tsByGroup[gid][tid] = String(r.Status || "NOT_STARTED");
+  });
 
   wrap.innerHTML = "";
 
-  results.forEach(({g, res}) => {
-    if (!res.ok) return;
+  groupsInClass.forEach(g => {
+    const gid = Number(g.GroupID);
+    const members = (studentsByGroup[gid] || []).slice().sort((a,b)=>String(a.Name).localeCompare(String(b.Name)));
 
-    const ts = res.taskStatus || {};
-    const members = res.members || [];
-    const assign = res.dailyAssignmentsByStudent || res.assignmentsByStudent || {};
-    const checks = res.roleChecksByStudent || {};
+    const ts = tsByGroup[gid] || {};
 
-    const counts = { NOT_STARTED:0, DOING:0, READY:0 };
-    tasksForStage.forEach(tid => {
-      const st = (ts[tid]?.status || "NOT_STARTED");
-      if (st === "DOING") counts.DOING++;
-      else if (st === "READY") counts.READY++;
-      else counts.NOT_STARTED++;
-    });
+    const counts = { NOT_STARTED:0, DOING:0, READY:0, OK:0, FIX:0 };
+
+tasksForStage.forEach(tid => {
+  const st = String(ts[tid] || "NOT_STARTED");
+  if (st === "DOING") counts.DOING++;
+  else if (st === "READY") counts.READY++;
+  else if (st === "OK") counts.OK++;
+  else if (st === "FIX") counts.FIX++;
+  else counts.NOT_STARTED++;
+});
 
     const card = document.createElement("div");
     card.className = "item";
@@ -1408,7 +1992,7 @@ async function renderAdminClassOverview(){
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = `NS ${counts.NOT_STARTED} • DO ${counts.DOING} • RDY ${counts.READY}`;
+    meta.textContent = `NS ${counts.NOT_STARTED} • DO ${counts.DOING} • RDY ${counts.READY} • OK ${counts.OK} • FIX ${counts.FIX}`;
 
     left.appendChild(title);
     left.appendChild(meta);
@@ -1422,22 +2006,20 @@ async function renderAdminClassOverview(){
     const bRD = document.createElement("span"); bRD.className="badge b2"; bRD.textContent = counts.READY;
 
     right.appendChild(bNS); right.appendChild(bDO); right.appendChild(bRD);
-
     top.appendChild(left);
     top.appendChild(right);
 
     card.appendChild(top);
 
-    // student line: roles done ratio
     const line = document.createElement("div");
     line.className = "note";
     line.style.marginTop = "8px";
 
     const parts = members.map(m => {
       const sid = String(m.StudentID);
-      const rids = assign[sid] || [];
-      const ck = checks[sid] || {};
-      const done = rids.filter(rid => ck[rid]?.done === true).length;
+      const rids = assignByStudent[sid] || [];
+      const ck = checksByStudent[sid] || {};
+      const done = rids.filter(rid => ck[rid] === true).length;
       return `${englishName(m.Name)} ${done}/${rids.length}`;
     });
 
@@ -1448,14 +2030,16 @@ async function renderAdminClassOverview(){
   });
 }
 
-/* ---------------- MANAGE TASKS (kept minimal) ---------------- */
+/* ======================= ADMIN: MANAGE ITEMS ======================= */
 function filteredItems(){
   const kindSel = qs("filterKind");
   const stageSel = qs("filterStage");
   const kind = kindSel ? kindSel.value : "ALL";
   const stage = stageSel ? stageSel.value : "ALL";
 
-  return state.items.filter(it => {
+  const base = (state.role === "admin") ? (state.itemsAll || []) : (state.items || []);
+
+  return base.filter(it => {
     if (kind !== "ALL" && String(it.Kind).toUpperCase() !== kind) return false;
     if (stage === "ALL") return true;
     if (stage === "ALL_STAGE") return String(it.Stage) === "ALL";
@@ -1490,25 +2074,34 @@ function renderItemsManager(){
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = `ID: ${it.ItemID} • ${String(it.Kind).toUpperCase()} • Stage: ${it.Stage}`;
+    meta.textContent = `ID: ${it.ItemID} • ${String(it.Kind).toUpperCase()} • Stage: ${it.Stage} • Active: ${String(it.Active)}`;
 
     left.appendChild(title);
     left.appendChild(meta);
 
     const right = document.createElement("div");
     right.className = "row wrap";
+    right.style.gap = "8px";
 
     const btnDeactivate = document.createElement("button");
     btnDeactivate.className = "ghost";
-    btnDeactivate.textContent = "Deactivate";
+    btnDeactivate.textContent = it.Active ? "Deactivate" : "Activate";
     btnDeactivate.style.padding = "8px 10px";
     btnDeactivate.onclick = async () => {
-      const ok = confirm("Deactivate this item? It will disappear from the app.");
+      const ok = confirm(`${it.Active ? "Deactivate" : "Activate"} this item?`);
       if (!ok) return;
-      const res = await apiPost({ action:"setItemActive", adminCode: state.adminCode, itemId: it.ItemID, active:false });
-      if (!res.ok) { alert(res.error || "Could not deactivate"); return; }
-      await refreshItems();
-      renderItemsManager();
+      try{
+        const { error } = await sb
+          .from("items")
+          .update({ Active: !it.Active })
+          .eq("ItemID", String(it.ItemID));
+        if (error) throw error;
+        await refreshItems();
+        renderItemsManager();
+      } catch(e){
+        console.log(e);
+        alert("Could not update item.");
+      }
     };
 
     right.appendChild(btnDeactivate);
@@ -1522,10 +2115,7 @@ function renderItemsManager(){
 
 async function refreshItems(){
   if (state.role !== "admin") return;
-  const res = await apiGet("login", { code: state.adminCode });
-  if (!res.ok) { alert(res.error || "Could not refresh"); return; }
-  state.items = res.items || state.items;
-  state.settings = res.settings || state.settings;
+  await loadItems(true);
 }
 
 async function addItemFromForm(){
@@ -1538,7 +2128,7 @@ async function addItemFromForm(){
   const kind = qs("newKind").value;
   const stage = qs("newStage").value;
   const tooltip = (qs("newTooltip")?.value || "").trim();
-  const points = (qs("newPoints")?.value || "").trim();
+  const pointsRaw = (qs("newPoints")?.value || "").trim();
   const singleOwner = qs("newSingle").value;
   const order = Number((qs("newOrder")?.value || "999") || 999);
 
@@ -1546,24 +2136,36 @@ async function addItemFromForm(){
   const prefix = (kind === "ROLE") ? "R_CUSTOM_" : "T_CUSTOM_";
   const itemId = prefix + safe.slice(0, 28) + "_" + Math.floor(Math.random()*9000+1000);
 
-  const res = await apiPost({
-    action:"addItem",
-    adminCode: state.adminCode,
-    itemId, kind, stage, title, tooltip,
-    points: (kind === "ROLE") ? points : "",
-    singleOwner, order, active:true,
-  });
+  const payload = {
+    ItemID: itemId,
+    Kind: String(kind),
+    Stage: String(stage),
+    Title: String(title),
+    Tooltip: String(tooltip),
+    Points: (kind === "ROLE") ? (Number(pointsRaw || 0) || 0) : 0,
+    SingleOwner: String(singleOwner).toUpperCase() === "TRUE",
+    Order: Number.isFinite(order) ? order : 999,
+    Active: true,
+  };
 
-  if (!res.ok) { if (msg) msg.textContent = res.error || "Could not add item"; return; }
+  try{
+    const { error } = await sb.from("items").insert(payload);
+    if (error) throw error;
 
-  if (qs("newTitle")) qs("newTitle").value = "";
-  if (qs("newTooltip")) qs("newTooltip").value = "";
-  if (qs("newPoints")) qs("newPoints").value = "";
-  if (qs("newOrder")) qs("newOrder").value = "999";
+    if (qs("newTitle")) qs("newTitle").value = "";
+    if (qs("newTooltip")) qs("newTooltip").value = "";
+    if (qs("newPoints")) qs("newPoints").value = "";
+    if (qs("newOrder")) qs("newOrder").value = "999";
 
-  await refreshItems();
-  renderItemsManager();
+    await refreshItems();
+    renderItemsManager();
+  } catch(e){
+    console.log(e);
+    if (msg) msg.textContent = "Could not add item (permissions / policy / connection).";
+  }
 }
+
+/* ======================= STUDENT: ROLE CARRY-OVER (previous day) ======================= */
 async function maybeOfferRoleCarryOver(){
   if (state.role !== "student") return;
   if (state.selectedDayNo !== state.currentDayNo) return;   // only offer on TODAY
@@ -1571,19 +2173,25 @@ async function maybeOfferRoleCarryOver(){
   if (state.currentDayNo <= 1) return;
 
   const prevDay = state.currentDayNo - 1;
-  const prev = await apiGet("getStudentDay", { studentId: state.user.studentId, dayNo: prevDay });
-  if (!prev.ok) return;
 
-  const prevRoles = prev.assignments || [];
+  const { data: prevAssigns, error } = await sb
+    .from("dailyassignments")
+    .select("RoleID")
+    .eq("StudentID", Number(state.user.StudentID))
+    .eq("DayNo", Number(prevDay));
+
+  if (error) return;
+
+  const prevRoles = (prevAssigns || []).map(r => String(r.RoleID));
   if (!prevRoles.length) return;
 
   const todayStage = getStageForSelectedDay();
-  const available = new Set(filterRolesForStage(todayStage).map(r => r.ItemID));
-  const carry = prevRoles.filter(rid => available.has(rid));
+  const available = new Set(filterRolesForStage(todayStage).map(r => String(r.ItemID)));
+  const carry = prevRoles.filter(rid => available.has(String(rid)));
   if (!carry.length) return;
 
   const names = carry
-    .map(rid => (state.items.find(x => x.ItemID === rid)?.Title || rid))
+    .map(rid => (state.items.find(x => String(x.ItemID) === String(rid))?.Title || rid))
     .slice(0, 6)
     .join(", ") + (carry.length > 6 ? "…" : "");
 
@@ -1592,163 +2200,265 @@ async function maybeOfferRoleCarryOver(){
 
   const failed = [];
   for (const rid of carry) {
-    const r = await apiPost({
-      action:"claimRole",
-      studentId: state.user.studentId,
-      roleId: rid,
-      dayNo: state.currentDayNo,
-      confirm: true
-    });
-    if (!r.ok) failed.push(rid);
+    try{
+      // still obey single-owner check
+      const taken = await checkSingleOwnerTaken(rid);
+      if (taken) { failed.push(rid); continue; }
+      await claimRole({ studentId: state.user.StudentID, roleId: rid, dayNo: state.currentDayNo });
+    } catch(e){
+      failed.push(rid);
+    }
   }
 
   await loadStudentDay(state.currentDayNo);
+  renderRoles();
+  renderHistory();
 
   if (failed.length) {
     alert("Some roles could not be kept (maybe already taken). Pick new roles for today.");
   }
 }
-/* ---------------- LOGIN ---------------- */
+
+/* ======================= LOGIN / LOGOUT ======================= */
 async function login(){
-  qs("loginError").textContent = "";
-  const code = qs("loginCode").value.trim();
-  if (!code) { qs("loginError").textContent = "Enter a code"; return; }
+  const errEl = qs("loginError");
+  errEl.textContent = "";
+  const codeRaw = qs("loginCode").value.trim();
+  if (!codeRaw) { errEl.textContent = "Enter a code"; return; }
 
-  const res = await apiGet("login", { code });
-  if (!res.ok) { qs("loginError").textContent = res.error || "Login failed"; return; }
+  const btn = qs("btnLogin");
+  btn.disabled = true;
 
-  // common state
-  state.role = res.role;
-  state.items = res.items || [];
-  state.calendar = res.calendar || [];
-  state.settings = res.settings || state.settings;
-  state.currentDayNo = Number(res.currentDayNo || 1);
+  try{
+    // load settings first (admin code + current day)
+    await loadSettings();
 
-  // restore selected day (with guards)
-  const saved = Number(localStorage.getItem("tinyhome_dayNo") || state.currentDayNo);
-  state.selectedDayNo = saved;
+    // attempt student login (LoginCode is int8)
+    let student = null;
+    const codeNum = Number(codeRaw);
+    if (Number.isFinite(codeNum)){
+      const { data, error } = await sb
+        .from("students")
+        .select("*")
+        .eq("LoginCode", codeNum)
+        .eq("Active", true)
+        .maybeSingle();
 
-  if (state.role === "student") {
-    if (![state.currentDayNo, state.currentDayNo + 1].includes(state.selectedDayNo)) {
-      state.selectedDayNo = state.currentDayNo;
+      if (error) throw error;
+      student = data || null;
     }
-  } else {
-    const dayNos = state.calendar.map(d => Number(d.DayNo));
-    if (!dayNos.includes(state.selectedDayNo)) state.selectedDayNo = state.currentDayNo;
-  }
 
-  // show main UI
-  qs("viewLogin").classList.add("hidden");
-  qs("viewMain").classList.remove("hidden");
-  qs("btnLogout").classList.remove("hidden");
+    // load common data
+    const isAdminAttempt = (String(state.settings.ADMIN_CODE || "") === String(codeRaw));
+    const forAdmin = !!isAdminAttempt;
 
-  buildDaySelect();
-  renderTodayNote();
+    await Promise.all([
+      loadItems(forAdmin),
+      loadCalendar(),
+      loadGroups(),
+    ]);
 
-  /* ================= STUDENT ================= */
-  if (state.role === "student") {
-    // IMPORTANT: set user first (loadStudentDay needs it)
-    state.user = res.user;
-
-    // optional seed (will be overwritten by loadStudentTaskStatus anyway)
-    state.taskStatus = res.taskStatus || {};
-
-    // Load the day the dropdown is actually showing (today OR tomorrow)
-    await loadStudentDay(state.selectedDayNo);
-
-    // Pull latest teacher OK/FIX for group tasks + start live polling
-    await loadStudentTaskStatus(state.selectedDayNo);
-    startStudentTaskPolling();
-
-    setSubtitle(`${state.user.name} • ${state.user.className} • Group ${state.user.groupId}`);
-    qs("who").textContent =
-      `Student: ${state.user.name} | Class: ${state.user.className} | Group: ${state.user.groupName || state.user.groupId}`;
-
-    // left panels
-    qs("studentLeft")?.classList.remove("hidden");
-    qs("adminLeft")?.classList.add("hidden");
-
-    // admin panels
-    qs("adminTop")?.classList.add("hidden");
-    qs("adminPanel")?.classList.add("hidden");
-
-    // offer carry-over only on TODAY (your function already checks this)
-    await maybeOfferRoleCarryOver();
-
-    renderRoles();
-    renderTasks();
-    renderHistory();
-    return;
-  }
-
-  /* ================= ADMIN ================= */
-  state.adminCode = code;
-  state.groups = res.groups || [];
-  setSubtitle("Teacher / Admin");
-  qs("who").textContent = "Admin: choose a group, check tasks, then use tabs for roles/manage.";
-
-  // left panels
-  qs("studentLeft")?.classList.add("hidden");
-  qs("adminLeft")?.classList.remove("hidden");
-
-  // admin panels
-  qs("adminTop")?.classList.remove("hidden");
-  qs("adminPanel")?.classList.remove("hidden");
-
-  // group select
-  const gsel = qs("groupSelect");
-  gsel.innerHTML = "";
-  state.groups.forEach(g => {
+    function buildOfficialDaySelect(){
+  const sel = qs("officialDaySelect");
+  if (!sel) return;
+  sel.innerHTML = "";
+  state.calendar.forEach(d => {
     const opt = document.createElement("option");
-    opt.value = g.GroupID;
-    opt.textContent = `${g.Class || ""} • ${g.GroupName || g.GroupID} (${g.GroupID})`;
-    gsel.appendChild(opt);
+    opt.value = d.DayNo;
+    opt.textContent = `${d.Label} — ${stageName(d.Stage)}`;
+    sel.appendChild(opt);
   });
+  sel.value = String(state.currentDayNo);
+}
 
-  state.adminGroupId = state.groups[0]?.GroupID || "";
-  gsel.value = state.adminGroupId;
+async function setOfficialDay(){
+  const msg = qs("officialDayMsg");
+  if (msg) msg.textContent = "";
+  const sel = qs("officialDaySelect");
+  const newDay = Number(sel?.value);
 
-  gsel.onchange = async () => {
-    state.adminGroupId = gsel.value;
+  try{
+    await upsertSetting("CURRENT_DAYNO", newDay);
+    await loadSettings();                 // refresh state.currentDayNo
+    buildOfficialDaySelect();             // keep dropdown aligned
+
+    // optional: snap admin view to the new official day
+    state.selectedDayNo = state.currentDayNo;
+    buildDaySelect();
+    renderTodayNote();
+
+    if (msg) msg.textContent = `Set official day to Day ${state.currentDayNo}.`;
+  } catch(e){
+    console.log(e);
+    if (msg) msg.textContent = "Failed to set official day (permissions / policy).";
+  }
+}
+
+    // restore selected day (guard later)
+    const saved = Number(localStorage.getItem("tinyhome_dayNo") || state.currentDayNo);
+    state.selectedDayNo = saved;
+
+    if (student){
+      state.role = "student";
+      state.user = student;
+      state.group = await loadGroupById(student.GroupID);
+
+      // cache group member IDs for single-owner checks
+      const { data: gm, error: gmErr } = await sb
+        .from("students")
+        .select("StudentID")
+        .eq("GroupID", Number(student.GroupID))
+        .eq("Active", true);
+      if (gmErr) throw gmErr;
+      state.groupMemberIds = (gm || []).map(x => Number(x.StudentID));
+
+      // student day guard
+      if (![state.currentDayNo, state.currentDayNo + 1].includes(state.selectedDayNo)) {
+        state.selectedDayNo = state.currentDayNo;
+      }
+
+      // show main UI
+      qs("viewLogin").classList.add("hidden");
+      qs("viewMain").classList.remove("hidden");
+      qs("btnLogout").classList.remove("hidden");
+
+      buildDaySelect();
+      renderTodayNote();
+
+      await loadStudentDay(state.selectedDayNo);
+      await loadStudentTaskStatus();
+      startStudentTaskPolling();
+
+      const groupName = state.group?.GroupName || String(student.GroupID);
+      setSubtitle(`${student.Name} • ${student.Class} • Group ${groupName}`);
+      qs("who").textContent = `Student: ${student.Name} | Class: ${student.Class} | Group: ${groupName}`;
+
+      qs("studentLeft")?.classList.remove("hidden");
+      qs("adminLeft")?.classList.add("hidden");
+      qs("adminTop")?.classList.add("hidden");
+      qs("adminPanel")?.classList.add("hidden");
+
+      await maybeOfferRoleCarryOver();
+
+      renderRoles();
+      renderTasks();
+      renderHistory();
+      return;
+    }
+
+    // admin login
+    if (!isAdminAttempt){
+      errEl.textContent = "Invalid code";
+      return;
+    }
+
+    state.role = "admin";
+    state.adminCode = codeRaw;
+
+    // admin day guard
+    const dayNos = state.calendar.map(d => Number(d.DayNo));
+    if (!dayNos.includes(Number(state.selectedDayNo))) state.selectedDayNo = state.currentDayNo;
+
+    // show main UI
+    qs("viewLogin").classList.add("hidden");
+    qs("viewMain").classList.remove("hidden");
+    qs("btnLogout").classList.remove("hidden");
+
+    buildDaySelect();
+    renderTodayNote();
+
+    buildOfficialDaySelect();
+    qs("btnSetOfficialDay").onclick = setOfficialDay;
+
+    setSubtitle("Teacher / Admin");
+    qs("who").textContent = "Admin: choose a group, check tasks, then use tabs for roles/manage.";
+
+    qs("studentLeft")?.classList.add("hidden");
+    qs("adminLeft")?.classList.remove("hidden");
+    qs("adminTop")?.classList.remove("hidden");
+    qs("adminPanel")?.classList.remove("hidden");
+
+    // group select
+    const gsel = qs("groupSelect");
+    gsel.innerHTML = "";
+    state.groups.forEach(g => {
+      const opt = document.createElement("option");
+      opt.value = g.GroupID;
+      opt.textContent = `${g.Class || ""} • ${g.GroupName || g.GroupID} (${g.GroupID})`;
+      gsel.appendChild(opt);
+    });
+
+    state.adminGroupId = state.groups[0]?.GroupID || "";
+    gsel.value = state.adminGroupId;
+
+    gsel.onchange = async () => {
+      state.adminGroupId = gsel.value;
+      await loadAdminGroup();
+      renderTasks();
+      renderAdminWhoDoing();
+      renderAdminAssignUI();
+      await renderAdminClassOverview();
+    };
+
+    // tabs
+    qs("tabBtnOverview").onclick = () => setAdminTab("overview");
+    qs("tabBtnAssign").onclick = () => setAdminTab("assign");
+    qs("tabBtnManage").onclick = () => setAdminTab("manage");
+    setAdminTab("overview");
+
+    // manage tools wiring
+    if (qs("btnAddItem")) qs("btnAddItem").onclick = addItemFromForm;
+    if (qs("btnRefreshItems")) qs("btnRefreshItems").onclick = async () => { await refreshItems(); renderItemsManager(); };
+    if (qs("filterKind")) qs("filterKind").onchange = renderItemsManager;
+    if (qs("filterStage")) qs("filterStage").onchange = renderItemsManager;
+
+    // initial load
     await loadAdminGroup();
     renderTasks();
     renderAdminWhoDoing();
     renderAdminAssignUI();
     await renderAdminClassOverview();
-  };
+    await refreshItems();
+    renderItemsManager();
 
-  // tabs
-  qs("tabBtnOverview").onclick = () => setAdminTab("overview");
-  qs("tabBtnAssign").onclick = () => setAdminTab("assign");
-  qs("tabBtnManage").onclick = () => setAdminTab("manage");
-  setAdminTab("overview");
-
-  // manage tools wiring
-  if (qs("btnAddItem")) qs("btnAddItem").onclick = addItemFromForm;
-  if (qs("btnRefreshItems")) qs("btnRefreshItems").onclick = async () => { await refreshItems(); renderItemsManager(); };
-  if (qs("filterKind")) qs("filterKind").onchange = renderItemsManager;
-  if (qs("filterStage")) qs("filterStage").onchange = renderItemsManager;
-
-  // initial load
-  await loadAdminGroup();
-  renderTasks();
-  renderAdminWhoDoing();
-  renderAdminAssignUI();
-  await renderAdminClassOverview();
-  await refreshItems();
-  renderItemsManager();
+  } catch(e){
+    console.log(e);
+    errEl.textContent = "Login failed (permissions / policy / connection).";
+  } finally {
+    btn.disabled = false;
+  }
 }
+
 function logout(){
   stopStudentTaskPolling();
+
   state = {
-    role: null, user: null, items: [], calendar: [],
-    history: [], totalEarnedPoints: 0,
-    settings: state.settings,
-    currentDayNo: 1, selectedDayNo: 1,
-    assignments: [], roleChecks: {}, taskStatus: {},
+    role: null,
+    user: null,
+    group: null,
+    groupMemberIds: [],
+
+    items: [],
+    itemsAll: [],
+    calendar: [],
+    settings: {...state.settings}, // keep loaded defaults/settings
+
+    currentDayNo: Number(state.settings.CURRENT_DAYNO || 1) || 1,
+    selectedDayNo: Number(state.settings.CURRENT_DAYNO || 1) || 1,
+
+    assignments: [],
+    roleChecks: {},
+    history: [],
+    totalEarnedPoints: 0,
     summary: { earnedPoints:0, unfinishedCount:0 },
-    groups: [], adminGroupId: null, adminCode: null,
-    adminMembers: [], adminAssignmentsByStudent: {}, adminRoleChecksByStudent: {}
+    taskStatus: {},
+
+    groups: [],
+    adminGroupId: null,
+    adminCode: null,
+    adminMembers: [],
+    adminAssignmentsByStudent: {},
+    adminRoleChecksByStudent: {},
   };
 
   qs("viewMain").classList.add("hidden");
@@ -1759,13 +2469,12 @@ function logout(){
   setSubtitle("Login to start");
 }
 
-// Wire buttons + Enter key
+/* ======================= WIRING ======================= */
 qs("btnLogin").addEventListener("click", login);
 qs("btnLogout").addEventListener("click", logout);
 qs("loginCode").addEventListener("keydown", (e) => {
   if (e.key === "Enter") login();
 });
 </script>
-</div> <!-- end .wrap -->
 </body>
 </html>
