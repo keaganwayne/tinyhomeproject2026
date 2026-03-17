@@ -1730,72 +1730,85 @@ async function login(){
 
     if (!isAdminAttempt){ errEl.textContent = 'Invalid code'; return; }
 
-    state.role = 'admin';
-    state.adminCode = codeRaw;
-    const dayNos = state.calendar.map(d => Number(d.DayNo));
-    if (!dayNos.includes(Number(state.selectedDayNo))) state.selectedDayNo = state.currentDayNo;
+state.role = 'admin';
+state.adminCode = codeRaw;
+state.selectedDayNo = state.currentDayNo;
 
-    show(qs('viewLogin'), false);
-    show(qs('btnLogout'), true);
-    setSubtitle('Teacher / Admin');
+show(qs('viewLogin'), false);
+show(qs('btnLogout'), true);
+setSubtitle('Teacher / Admin');
+qs('adminDayBadge').textContent = `Day ${state.currentDayNo}`;
+
+const officialSel = qs('officialDaySelect');
+officialSel.innerHTML = '';
+state.calendar.forEach(d => {
+  const opt = document.createElement('option');
+  opt.value = d.DayNo;
+  opt.textContent = `${d.Label} — ${stageName(d.Stage)}`;
+  officialSel.appendChild(opt);
+});
+officialSel.value = String(state.currentDayNo);
+
+qs('btnSetOfficialDay').onclick = async () => {
+  const newDay = Number(officialSel.value);
+  try{
+    await upsertSetting('CURRENT_DAYNO', newDay);
+    await loadSettings();
+
+    state.selectedDayNo = state.currentDayNo;
     qs('adminDayBadge').textContent = `Day ${state.currentDayNo}`;
-
-    const officialSel = qs('officialDaySelect');
-    officialSel.innerHTML = '';
-    state.calendar.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d.DayNo; opt.textContent = `${d.Label} — ${stageName(d.Stage)}`;
-      officialSel.appendChild(opt);
-    });
     officialSel.value = String(state.currentDayNo);
-    qs('btnSetOfficialDay').onclick = async () => {
-      const newDay = Number(officialSel.value);
-      try{
-        await upsertSetting('CURRENT_DAYNO', newDay);
-        await loadSettings();
-        state.selectedDayNo = state.currentDayNo;
-        qs('adminDayBadge').textContent = `Day ${state.currentDayNo}`;
-        qs('officialDayMsg').textContent = `Set official day to Day ${state.currentDayNo}.`;
-      } catch(e){ console.log(e); qs('officialDayMsg').textContent = 'Failed to set official day.'; }
-    };
-
-    const gsel = qs('groupSelect');
-    gsel.innerHTML = '';
-    state.groups.forEach(g => {
-      const opt = document.createElement('option');
-      opt.value = g.GroupID;
-      opt.textContent = `${g.Class || ''} • ${g.GroupName || g.GroupID} (${g.GroupID})`;
-      gsel.appendChild(opt);
-    });
-    state.adminGroupId = state.groups[0]?.GroupID || '';
-    gsel.value = state.adminGroupId;
-    gsel.onchange = async () => {
-      state.adminGroupId = gsel.value;
-      await loadAdminGroup();
-      renderAdminWhoDoing();
-      renderAdminAssignUI();
-      await renderAdminClassOverview();
-      renderAdminTasks();
-    };
-
-    qs('tabBtnOverview').onclick = () => setAdminTab('overview');
-    qs('tabBtnAssign').onclick = () => setAdminTab('assign');
-    qs('tabBtnManage').onclick = () => setAdminTab('manage');
-    setAdminTab('overview');
-
-    qs('btnAddItem').onclick = addItemFromForm;
-    qs('btnRefreshItems').onclick = async () => { await refreshItems(); renderItemsManager(); };
-    qs('filterKind').onchange = renderItemsManager;
-    qs('filterStage').onchange = renderItemsManager;
+    qs('officialDayMsg').textContent = `Set official day to Day ${state.currentDayNo}.`;
 
     await loadAdminGroup();
     renderAdminWhoDoing();
     renderAdminAssignUI();
     await renderAdminClassOverview();
     renderAdminTasks();
-    await refreshItems();
-    renderItemsManager();
-    showAdminView();
+  } catch(e){
+    console.log(e);
+    qs('officialDayMsg').textContent = 'Failed to set official day.';
+  }
+};
+
+const gsel = qs('groupSelect');
+gsel.innerHTML = '';
+state.groups.forEach(g => {
+  const opt = document.createElement('option');
+  opt.value = g.GroupID;
+  opt.textContent = `${g.Class || ''} • ${g.GroupName || g.GroupID} (${g.GroupID})`;
+  gsel.appendChild(opt);
+});
+state.adminGroupId = state.groups[0]?.GroupID || '';
+gsel.value = state.adminGroupId;
+
+gsel.onchange = async () => {
+  state.adminGroupId = gsel.value;
+  await loadAdminGroup();
+  renderAdminWhoDoing();
+  renderAdminAssignUI();
+  await renderAdminClassOverview();
+  renderAdminTasks();
+};
+
+qs('tabBtnOverview').onclick = () => setAdminTab('overview');
+qs('tabBtnAssign').onclick = () => setAdminTab('assign');
+qs('tabBtnManage').onclick = () => setAdminTab('manage');
+setAdminTab('overview');
+
+qs('btnAddItem').onclick = addItemFromForm;
+qs('btnRefreshItems').onclick = async () => { await refreshItems(); renderItemsManager(); };
+qs('filterKind').onchange = renderItemsManager;
+qs('filterStage').onchange = renderItemsManager;
+
+await loadAdminGroup();
+renderAdminWhoDoing();
+renderAdminAssignUI();
+await renderAdminClassOverview();
+renderAdminTasks();
+await refreshItems();
+renderItemsManager();
+showAdminView();
   } catch(e){
     console.log(e);
     errEl.textContent = 'Login failed.';
