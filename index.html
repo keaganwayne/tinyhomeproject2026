@@ -1755,7 +1755,8 @@ qs('btnSetOfficialDay').onclick = async () => {
     await upsertSetting('CURRENT_DAYNO', newDay);
     await loadSettings();
 
-    state.selectedDayNo = state.currentDayNo;
+   state.selectedDayNo = state.currentDayNo;
+    localStorage.setItem('tinyhome_dayNo', String(state.currentDayNo));
     qs('adminDayBadge').textContent = `Day ${state.currentDayNo}`;
     officialSel.value = String(state.currentDayNo);
     qs('officialDayMsg').textContent = `Set official day to Day ${state.currentDayNo}.`;
